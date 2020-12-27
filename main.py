@@ -5,7 +5,6 @@ from multiprocessing.pool import ThreadPool
 from typing import List, Union
 
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
 from ytmusicapi import YTMusic
 
 
@@ -14,7 +13,7 @@ class Yt2SpMigrator:
         self.ytmusic = YTMusic(headers_file)
         with open(sp_config, "r") as f:
             config = json.load(f)
-        self.sp = spotipy.Spotify(auth_manager=SpotifyOAuth(**config))
+        self.sp = spotipy.Spotify(auth_manager=spotipy.SpotifyOAuth(**config))
 
     def _unpack_search_result(self, result: dict) -> Union[str, None]:
         tracks = result['tracks']['items']
@@ -67,38 +66,50 @@ class Yt2SpMigrator:
         assert len(after_adding) > len(liked_tracks)
         return after_adding
 
-    def migrate_yt_playlist_to_sp(self, yt_playlist: list):
-        track_list = self._get_sp_track_ids(yt_playlist)
+    def save_track_ids_to_playlist(self, track_ids: List[str], name: str) -> str:
         user_id = self.sp.current_user()['id']
-        playlist_id = self.sp.user_playlist_create(user=user_id, name=f'YT migration {date.today()}', public=False)[
-            'id']
-        return self.sp.playlist_add_items(playlist_id, track_list)
+        playlist_id = self.get_sp_playlist_by_name(name)
+        if not playlist_id:
+            playlist_id = self.sp.user_playlist_create(user=user_id,
+                                                       name=name,
+                                                       public=False)['id']
+            self.sp.playlist_add_items(playlist_id, track_ids)
+            return playlist_id
+        pl_items = self.sp.playlist_items(playlist_id)['items']
+        playlist_content = [p['id'] for p in pl_items]
+        to_add = [t for t in track_ids if t not in playlist_content]
+        if len(to_add) > 0:
+            self.sp.playlist_add_items(playlist_id, to_add)
+        return playlist_id
+
+    def get_sp_playlist_by_name(self, p_name: str) -> Union[str, None]:
+        playlists = migrator.sp.current_user_playlists()['items']
+        playlist_id = [p['id'] for p in playlists if p['name'] == p_name]
+        if len(playlist_id) == 0:
+            return None
+        return playlist_id[0]
+
+    def merge_playlists(self, playlist1_id: str, playlist2_id: str, p_name: str) -> str:
+        playlist1 = self.sp.playlist_items(playlist1_id)['items']
+        playlist2 = self.sp.playlist_items(playlist2_id)['items']
+        with ThreadPool() as p:
+            p1_ids = p.map(self._unpack_track, playlist1)
+            p2_ids = p.map(self._unpack_track, playlist2)
+        to_add = self._non_duplicated_append(p1_ids, p2_ids)
+        new_list = self.save_track_ids_to_playlist(p1_ids, p_name)  # spotify allows adding max 100 tracks per request
+        with ThreadPool() as p:
+            p.map(functools.partial(self.sp.playlist_add_items, new_list), [[t] for t in to_add])
+        return new_list
 
 
 if __name__ == '__main__':
-    """
-    For successful using of this script you should do the following:
-    1) authenticate in Youtube music
-    2) get headers from authenticated Youtube music GET requests
-    3) place the following headers to headers.json:
-        - Authorization
-        - Cookie
-        - x-origin
-    For a full information please read the documentation:
-        https://ytmusicapi.readthedocs.io/en/latest/setup.html
-    
-    And also you should create Spotify config.json with the following keys:
-    - client_id
-    - client_secret
-    - redirect_uri: you can use http://localhost:8888/callback for local script execution
-    - scope: as space-separated string. This script requires the followings:
-        user-library-modify user-library-read playlist-read-private playlist-modify-private user-top-read 
-        user-read-email user-read-private
-    For a full information please read the documentation: 
-        https://developer.spotify.com/documentation/general/guides/app-settings/
-        https://developer.spotify.com/documentation/general/guides/scopes/
-    """
     migrator = Yt2SpMigrator("headers.json", "config.json")
-    playlist_names = ['My 2020 Year in Review', 'Your Likes']
     liked_tracks = migrator.like_yt_tracks_on_sp(migrator.get_yt_playlist_by_name('Your Likes'))
-    top2020_playlist = migrator.migrate_yt_playlist_to_sp(migrator.get_yt_playlist_by_name('My 2020 Year in Review'))
+    yt_2020_tracks = migrator.get_yt_playlist_by_name('My 2020 Year in Review')
+    track_ids = migrator._get_sp_track_ids(yt_2020_tracks)
+    name = f'YT migration {date.today()}'
+    top2020_playlist = migrator.save_track_ids_to_playlist(track_ids, name)
+    sp_top = migrator.get_sp_playlist_by_name('Your Top Songs 2020')
+    yt_top = migrator.get_sp_playlist_by_name(f'YT migration {date.today()}')
+    united_2020 = migrator.merge_playlists(sp_top, yt_top, 'United 2020 top')
+    assert len(migrator.sp.playlist_items(united_2020)['items']) > 100
