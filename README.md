@@ -8,7 +8,7 @@ For successful using of this script you should create headers.json by the follow
   - Authorization
   - Cookie
   - x-origin
-  For a full information please read the documentation: https://ytmusicapi.readthedocs.io/en/latest/setup.html
+For a full information please read the documentation: https://ytmusicapi.readthedocs.io/en/latest/setup.html
     
 And also you should create Spotify config.json with the following keys:
 - client_id
@@ -16,4 +16,4 @@ And also you should create Spotify config.json with the following keys:
 - redirect_uri: you can use http://localhost:8888/callback for local script execution
 - scope: as space-separated string. This script requires the followings:
   user-library-modify user-library-read playlist-read-private playlist-modify-private user-top-read user-read-email user-read-private
-  For a full information please read the documentation: https://developer.spotify.com/documentation/general/guides/app-settings/, https://developer.spotify.com/documentation/general/guides/scopes/
+For a full information please read the documentation: https://developer.spotify.com/documentation/general/guides/app-settings/, https://developer.spotify.com/documentation/general/guides/scopes/
