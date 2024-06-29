@@ -83,7 +83,7 @@ class Yt2SpMigrator:
         return playlist_id
 
     def get_sp_playlist_by_name(self, p_name: str) -> Union[str, None]:
-        playlists = migrator.sp.current_user_playlists()['items']
+        playlists = self.sp.current_user_playlists()['items']
         playlist_id = [p['id'] for p in playlists if p['name'] == p_name]
         if len(playlist_id) == 0:
             return None
