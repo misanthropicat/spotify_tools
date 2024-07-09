@@ -1,2 +1,5 @@
 ytmusicapi
 spotipy
+kivy
+kivymd
+python-dotenv
