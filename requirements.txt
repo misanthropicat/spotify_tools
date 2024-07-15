@@ -1,5 +1,5 @@
 ytmusicapi
 spotipy
 kivy
-kivymd
+https://github.com/kivymd/KivyMD/archive/master.zip
 python-dotenv

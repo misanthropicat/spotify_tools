@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 import kivy
@@ -5,7 +6,9 @@ import kivy
 kivy.require("2.3.0")
 
 from datetime import date
-from dotenv import load_dotenv
+from kivy.logger import Logger
+from kivy.clock import Clock
+from kivy.utils import platform
 from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.screen import MDScreen
@@ -19,11 +22,16 @@ from kivymd.uix.snackbar.snackbar import MDSnackbar, MDSnackbarText
 from kivymd.uix.appbar.appbar import (
     MDTopAppBar,
     MDTopAppBarTitle,
-    MDTopAppBarLeadingButtonContainer,
 )
 from kivymd.uix.segmentedbutton import MDSegmentedButton, MDSegmentButtonIcon, MDSegmentedButtonItem
 
-from .playlist_creator import PlaylistCreator
+if platform == "android":
+    from .playlist_creator import PlaylistCreator
+else:
+    from src import PlaylistCreator
+
+logging.basicConfig(level=logging.DEBUG)
+Logger.setLevel(logging.DEBUG)
 
 
 class PlaylistCreatorLabel(MDLabel):
@@ -354,13 +362,52 @@ class PlaylistCreatorApp(MDApp):
     def build(self):
         self.theme_cls.theme_style = "Dark"
         self.theme_cls.theme_style_switch_animation = True
-        self.theme_cls.dynamic_color = True
-        self.theme_cls.theme_style_switch_animation = True
         self.theme_cls.primary_palette = "Teal"
-        self.icon = os.path.join(os.getcwd(), "data", "icon.svg")
+        if platform == "android":
+            from android import loadingscreen
+
+            Clock.schedule_once(loadingscreen.hide_loading_screen, 0)
+        else:
+            from dotenv import load_dotenv
+
+            load_dotenv()
         return MainScreen()
+
+    def on_start(self):
+        Logger.debug("PlaylistCreator: on_start")
+
+        def callback(permission, results):
+            if all([res for res in results]):
+                Clock.schedule_once(self.set_dynamic_color)
+
+        if platform == "android":
+            from android.storage import app_storage_path
+            from android import mActivity
+
+            context = mActivity.getApplicationContext()
+            result = context.getExternalFilesDir(None)
+            storage_path = str(result.toString()) if result else app_storage_path()
+
+        self.storage_path = storage_path if platform == "android" else os.getcwd()
+        print(os.listdir(self.storage_path))
+        self.icon = os.path.join(self.storage_path, "data", "icon.svg")
+
+    def on_pause(self):
+        return True
+
+    def on_resume(self, *args):
+        """Updating the color scheme when the application resumes."""
+        self.theme_cls.set_colors()
+
+    def set_dynamic_color(self, *args) -> None:
+        """
+        When sets the `dynamic_color` value, the self method will be
+        `called.theme_cls.set_colors()` which will generate a color
+        scheme from a custom wallpaper if `dynamic_color` is `True`.
+        """
+
+        self.theme_cls.dynamic_color = True
 
 
 if __name__ == "__main__":
-    load_dotenv()
     PlaylistCreatorApp().run()
