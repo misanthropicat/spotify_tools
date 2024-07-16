@@ -23,13 +23,15 @@ from kivymd.uix.snackbar.snackbar import MDSnackbar, MDSnackbarText
 from kivymd.uix.appbar.appbar import (
     MDTopAppBar,
     MDTopAppBarTitle,
+    MDTopAppBarTrailingButtonContainer,
+    MDActionTopAppBarButton,
 )
-from kivymd.uix.segmentedbutton import MDSegmentedButton, MDSegmentButtonIcon, MDSegmentedButtonItem
 
 if platform == "android":
     sys.path.append(os.getcwd())
-
-from src import PlaylistCreator
+    from playlist_creator import PlaylistCreator
+else:
+    from src import PlaylistCreator
 
 logging.basicConfig(level=logging.DEBUG)
 Logger.setLevel(logging.DEBUG)
@@ -76,24 +78,23 @@ class PlaylistCreatorSnackbar(MDSnackbar):
 class MainScreen(MDScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-        """ self.switch_theme_button = MDSegmentedButton(
-            MDSegmentedButtonItem(
-                MDSegmentButtonIcon(icon="moon-waning-crescent"),
-                id="theme-dark",
-            ),
-            MDSegmentedButtonItem(
-                MDSegmentButtonIcon(icon="language-python"),
-                id="theme-light",
-                on_active=self.switch_theme_button,
-            ),
-            id="switch-theme",
-            type="large",
-            size_hint_x=0.2,
-            pos_hint={"center_x": 0.8, "center_y": 0.5},
-        ) """
+        self.app = MDApp.get_running_app()
         self.app_top_bar = MDTopAppBar(
             MDTopAppBarTitle(text="PlaylistCreator", pos_hint={"center_x": 0.5}, halign="center"),
+            MDTopAppBarTrailingButtonContainer(
+                MDActionTopAppBarButton(
+                    id="light",
+                    icon="weather-sunny",
+                    on_release=lambda x: self.app.set_theme("Light"),
+                ),
+                MDActionTopAppBarButton(
+                    id="dark",
+                    icon="moon-waxing-crescent",
+                    on_release=lambda x: self.app.set_theme("Dark"),
+                ),
+                pos_hint={"center_x": 0.8, "center_y": 0.5},
+                size_hint=(None, None),
+            ),
             type="small",
             size_hint_x=1.0,
             pos_hint={"center_x": 0.5, "center_y": 0.95},
@@ -154,14 +155,14 @@ class MainScreen(MDScreen):
         self.command_button.bind(on_release=lambda x: self.command_menu.open())
         self.command_layout.add_widget(self.command_button)
 
-        app = MDApp.get_running_app()
-        self.playlist_creator = app.playlist_creator
+        self.playlist_creator = self.app.playlist_creator
         self.username = self.playlist_creator.sp.me()["id"]
 
     def command_menu_callback(self, text):
         self.command_button.children[0].text = text
         self.command_menu.dismiss()
         self.show_additional_widgets(text)
+        self.validate_parameters()
 
     def show_additional_widgets(self, text):
         self.time_range_layout.clear_widgets()
@@ -260,13 +261,34 @@ class MainScreen(MDScreen):
             height="56dp",
             theme_width="Custom",
             pos_hint={"center_x": 0.5, "center_y": 0.5},
+            disabled=True,
         )
         generate_icon = self.generate_button.get_ids()["generate_icon"]
         generate_icon.x = self.generate_button.get_ids()["generate_text"].width - (
             generate_icon.width + 10
         )
-        self.generate_button.bind(on_press=self.generate_playlist)
+        self.generate_button.bind(on_release=self.generate_playlist)
         self.grid_layout.add_widget(self.generate_button)
+
+    def validate_parameters(self):
+        command = self.command_button.children[0].text
+        match command:
+            case "Get Top" | "Get Recommendations":
+                if self.time_range_button.children[0].text in [
+                    "Short term",
+                    "Medium term",
+                    "Long term",
+                ]:
+                    self.generate_button.disabled = False
+            case "Blend With Friend":
+                if (
+                    self.time_range_button.children[0].text
+                    in ["Short term", "Medium term", "Long term"]
+                    and self.playlist_button.children[0].text != "Select playlist..."
+                    and self.friend_input.text
+                    and self.friend_playlist_button.children[0].text != "Select playlist..."
+                ):
+                    self.generate_button.disabled = False
 
     def get_playlists(self, username: str):
         playlists = self.playlist_creator.get_user_playlists(username)
@@ -330,10 +352,12 @@ class MainScreen(MDScreen):
     def time_range_callback(self, text):
         self.time_range_button.children[0].text = text
         self.time_range_menu.dismiss()
+        self.validate_parameters()
 
     def playlist_callback(self, text):
         self.playlist_button.children[0].text = text
         self.playlist_menu.dismiss()
+        self.validate_parameters()
 
     def show_friend_playlists(self, instance):
         if instance.text.strip():
@@ -358,15 +382,55 @@ class MainScreen(MDScreen):
     def friend_playlist_callback(self, text):
         self.friend_playlist_button.children[0].text = text
         self.friend_playlist_menu.dismiss()
+        self.validate_parameters()
 
 
 class PlaylistCreatorApp(MDApp):
+    all_colors = [
+        "Aqua",
+        "Aquamarine",
+        "Blue",
+        "Blueviolet",
+        "Cadetblue",
+        "Cornflowerblue",
+        "Cyan",
+        "Darkblue",
+        "Darkcyan",
+        "Darkseagreen",
+        "Darkslateblue",
+        "Darkturquoise",
+        "Darkviolet",
+        "Deepskyblue",
+        "Dodgerblue",
+        "Lightblue",
+        "Lightcyan",
+        "Lightseagreen",
+        "Lightskyblue",
+        "Lightsteelblue",
+        "Mediumaquamarine",
+        "Mediumblue",
+        "Mediumpurple",
+        "Mediumseagreen",
+        "Mediumslateblue",
+        "Mediumturquoise",
+        "Midnightblue",
+        "Navy",
+        "Paleturquoise",
+        "Powderblue",
+        "Royalblue",
+        "Seagreen",
+        "Skyblue",
+        "Slateblue",
+        "Steelblue",
+        "Teal",
+        "Turquoise",
+    ]
+
     def build(self):
-        self.theme_cls.theme_style = "Dark"
+        self.theme_cls.primary_hue = "A200"
+        self.set_theme("Dark")
         self.theme_cls.theme_style_switch_animation = True
-        self.theme_cls.primary_palette = "Teal"
         if platform == "android":
-            from android import loadingscreen
             from android.storage import app_storage_path
             from android import mActivity
 
@@ -374,32 +438,33 @@ class PlaylistCreatorApp(MDApp):
             result = context.getExternalFilesDir(None)
             storage_path = str(result.toString()) if result else app_storage_path()
 
-            Clock.schedule_once(loadingscreen.hide_loading_screen, 0)
-
             os.environ["SPOTIPY_CLIENT_ID"] = "b2ec6891adb04433bc49d681cda930ed"
             os.environ["SPOTIPY_REDIRECT_URI"] = "http://localhost:8888/callback"
-
-            self.playlist_creator = PlaylistCreator(platform)
         else:
             from dotenv import load_dotenv
 
             load_dotenv()
-            self.playlist_creator = PlaylistCreator(platform)
 
+        self.playlist_creator = PlaylistCreator(platform)
         self.username = self.playlist_creator.sp.me()["id"]
         self.storage_path = storage_path if platform == "android" else os.getcwd()
         logging.debug(f"Storage path: {os.listdir(self.storage_path)}")
         self.icon = os.path.join(self.storage_path, "data", "icon.svg")
         return MainScreen()
 
+    def on_start(self):
+        def on_start(*args):
+            self.root.md_bg_color = self.theme_cls.backgroundColor
+
     def on_pause(self):
         return True
 
-    def on_token_received(self, token):
-        logging.debug(f"Token received: {token}")
-
-    def on_error_received(self, error):
-        logging.error(f"Error received: {error}")
+    def set_theme(self, theme):
+        self.theme_cls.theme_style = theme
+        self.theme_cls.primary_palette = random.choice(self.all_colors)
+        self.theme_cls.accent_palette = random.choice(self.all_colors)
+        if self.root:
+            self.root.md_bg_color = self.theme_cls.primaryContainerColor
 
 
 if __name__ == "__main__":
