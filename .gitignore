@@ -2,3 +2,6 @@ venv*/
 .cache*
 .env
 .vscode/
+__pycache__
+.buildozer/
+bin/
