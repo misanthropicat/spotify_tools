@@ -13,7 +13,7 @@ package.domain = org.misanthropicat
 source.dir = src
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,svg,env,png
+source.include_exts = py,svg,png,json
 
 # (list) List of inclusions using pattern matching
 source.include_patterns = data/*
@@ -87,11 +87,11 @@ fullscreen = 1
 # see https://lottiefiles.com/ for examples and https://airbnb.design/lottie/
 # for general documentation.
 # Lottie files can be created using various tools, like Adobe After Effect or Synfig.
-#android.presplash_lottie = "path/to/lottie/file.json"
+android.presplash_lottie = src/data/presplash.json
 
 # (str) Adaptive icon of the application (used if Android API level is 26+ at runtime)
 #icon.adaptive_foreground.filename = %(source.dir)s/data/icon_fg.png
-icon.adaptive_background.filename = %(source.dir)s/data/icon_bg.png
+icon.adaptive_background.filename = %(source.dir)s/src/data/icon_bg.png
 
 # (list) Permissions
 # (See https://python-for-android.readthedocs.io/en/latest/buildoptions/#build-options-1 for all the supported syntaxes and properties)
@@ -107,7 +107,7 @@ android.api = 33
 android.minapi = 21
 
 # (int) Android SDK version to use
-android.sdk = 27
+# android.sdk = 27
 
 # (str) Android NDK version to use
 android.ndk = 25b
@@ -116,7 +116,7 @@ android.ndk = 25b
 android.ndk_api = 21
 
 # (bool) Use --private data storage (True) or --dir public storage (False)
-#android.private_storage = True
+android.private_storage = True
 
 # (str) Android NDK directory (if empty, it will be automatically downloaded.)
 android.ndk_path = 
@@ -177,10 +177,10 @@ android.accept_sdk_license = True
 
 # (list) List of Java files to add to the android project (can be java or a
 # directory containing the files)
-#android.add_src =
+# android.add_src = src
 
 # (list) Android AAR archives to add
-#android.add_aars =
+# android.add_aars = %(source.dir)s/spotify-auth-release-2.1.0.aar
 
 # (list) Put these files or directories in the apk assets directory.
 # Either form may be used, and assets need not be in 'source.include_exts'.
@@ -206,7 +206,7 @@ android.add_resources = src/data/icon.svg
 # (bool) Enable AndroidX support. Enable when 'android.gradle_dependencies'
 # contains an 'androidx' package, or any package from Kotlin source.
 # android.enable_androidx requires android.api >= 28
-#android.enable_androidx = True
+# android.enable_androidx = True
 
 # (list) add java compile options
 # this can for example be necessary when importing certain java libraries using the 'android.gradle_dependencies' option
@@ -216,7 +216,7 @@ android.add_resources = src/data/icon.svg
 # (list) Gradle repositories to add {can be necessary for some android.gradle_dependencies}
 # please enclose in double quotes 
 # e.g. android.gradle_repositories = "maven { url 'https://kotlin.bintray.com/ktor' }"
-#android.add_gradle_repositories =
+# android.add_gradle_repositories = "maven { url 'https://mvnrepository.com/artifact/com.spotify.android/auth' }", "maven { url 'https://mvnrepository.com/artifact/androidx.browser/browser' }", "maven { url 'https://mvnrepository.com/artifact/androidx.appcompat/appcompat' }"
 
 # (list) packaging options to add 
 # see https://google.github.io/android-gradle-dsl/current/com.android.build.gradle.internal.dsl.PackagingOptions.html
@@ -226,7 +226,7 @@ android.add_resources = src/data/icon.svg
 #android.add_packaging_options =
 
 # (list) Java classes to add as activities to the manifest.
-#android.add_activities = com.example.ExampleActivity
+# android.add_activities = org.misanthropicat.MyKivyActivity
 
 # (str) OUYA Console category. Should be one of GAME or APP
 # If you leave this blank, OUYA support will not be enabled
@@ -283,7 +283,7 @@ android.logcat_pid_only = True
 
 # (list) The Android archs to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
 # In past, was `android.arch` as we weren't supporting builds for multiple archs at the same time.
-android.archs = arm64-v8a, armeabi-v7a
+android.archs = arm64-v8a
 
 # (int) overrides automatic versionCode computation (used in build.gradle)
 # this is not the same as app version and should only be edited if you know what you're doing

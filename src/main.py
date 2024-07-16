@@ -1,6 +1,7 @@
 import logging
 import os
 import random
+import sys
 import kivy
 
 kivy.require("2.3.0")
@@ -26,9 +27,9 @@ from kivymd.uix.appbar.appbar import (
 from kivymd.uix.segmentedbutton import MDSegmentedButton, MDSegmentButtonIcon, MDSegmentedButtonItem
 
 if platform == "android":
-    from .playlist_creator import PlaylistCreator
-else:
-    from src import PlaylistCreator
+    sys.path.append(os.getcwd())
+
+from src import PlaylistCreator
 
 logging.basicConfig(level=logging.DEBUG)
 Logger.setLevel(logging.DEBUG)
@@ -105,7 +106,7 @@ class MainScreen(MDScreen):
             cols=1,
             spacing="16dp",
             padding="16dp",
-            size_hint=(1, 1),
+            size_hint=(1, 0.9),
             pos_hint={"center_x": 0.5, "top": 0.9},
         )
         self.add_widget(self.grid_layout)
@@ -153,7 +154,8 @@ class MainScreen(MDScreen):
         self.command_button.bind(on_release=lambda x: self.command_menu.open())
         self.command_layout.add_widget(self.command_button)
 
-        self.playlist_creator = PlaylistCreator()
+        app = MDApp.get_running_app()
+        self.playlist_creator = app.playlist_creator
         self.username = self.playlist_creator.sp.me()["id"]
 
     def command_menu_callback(self, text):
@@ -257,11 +259,11 @@ class MainScreen(MDScreen):
             style="tonal",
             height="56dp",
             theme_width="Custom",
-            size_hint_x=0.5,
+            pos_hint={"center_x": 0.5, "center_y": 0.5},
         )
         generate_icon = self.generate_button.get_ids()["generate_icon"]
-        generate_icon.x = self.generate_button.get_ids()["generate_text"].get_center_x() - (
-            generate_icon.width + 0.1
+        generate_icon.x = self.generate_button.get_ids()["generate_text"].width - (
+            generate_icon.width + 10
         )
         self.generate_button.bind(on_press=self.generate_playlist)
         self.grid_layout.add_widget(self.generate_button)
@@ -365,22 +367,6 @@ class PlaylistCreatorApp(MDApp):
         self.theme_cls.primary_palette = "Teal"
         if platform == "android":
             from android import loadingscreen
-
-            Clock.schedule_once(loadingscreen.hide_loading_screen, 0)
-        else:
-            from dotenv import load_dotenv
-
-            load_dotenv()
-        return MainScreen()
-
-    def on_start(self):
-        Logger.debug("PlaylistCreator: on_start")
-
-        def callback(permission, results):
-            if all([res for res in results]):
-                Clock.schedule_once(self.set_dynamic_color)
-
-        if platform == "android":
             from android.storage import app_storage_path
             from android import mActivity
 
@@ -388,25 +374,32 @@ class PlaylistCreatorApp(MDApp):
             result = context.getExternalFilesDir(None)
             storage_path = str(result.toString()) if result else app_storage_path()
 
+            Clock.schedule_once(loadingscreen.hide_loading_screen, 0)
+
+            os.environ["SPOTIPY_CLIENT_ID"] = "b2ec6891adb04433bc49d681cda930ed"
+            os.environ["SPOTIPY_REDIRECT_URI"] = "http://localhost:8888/callback"
+
+            self.playlist_creator = PlaylistCreator(platform)
+        else:
+            from dotenv import load_dotenv
+
+            load_dotenv()
+            self.playlist_creator = PlaylistCreator(platform)
+
+        self.username = self.playlist_creator.sp.me()["id"]
         self.storage_path = storage_path if platform == "android" else os.getcwd()
-        print(os.listdir(self.storage_path))
+        logging.debug(f"Storage path: {os.listdir(self.storage_path)}")
         self.icon = os.path.join(self.storage_path, "data", "icon.svg")
+        return MainScreen()
 
     def on_pause(self):
         return True
 
-    def on_resume(self, *args):
-        """Updating the color scheme when the application resumes."""
-        self.theme_cls.set_colors()
+    def on_token_received(self, token):
+        logging.debug(f"Token received: {token}")
 
-    def set_dynamic_color(self, *args) -> None:
-        """
-        When sets the `dynamic_color` value, the self method will be
-        `called.theme_cls.set_colors()` which will generate a color
-        scheme from a custom wallpaper if `dynamic_color` is `True`.
-        """
-
-        self.theme_cls.dynamic_color = True
+    def on_error_received(self, error):
+        logging.error(f"Error received: {error}")
 
 
 if __name__ == "__main__":
