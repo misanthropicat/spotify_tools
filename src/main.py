@@ -19,7 +19,7 @@ from kivymd.uix.textfield import MDTextField
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.button import MDButton, MDButtonText, MDIconButton, MDButtonIcon
 from kivymd.uix.slider.slider import MDSlider, MDSliderValueLabel, MDSliderHandle
-from kivymd.uix.snackbar.snackbar import MDSnackbar, MDSnackbarText
+from kivymd.uix.snackbar.snackbar import MDSnackbar, MDSnackbarText, MDSnackbarSupportingText
 from kivymd.uix.appbar.appbar import (
     MDTopAppBar,
     MDTopAppBarTitle,
@@ -64,8 +64,11 @@ class PlaylistCreatorSnackbar(MDSnackbar):
     def __init__(self, *args, **kwargs):
         text = kwargs["text"]
         del kwargs["text"]
+        sup_text = kwargs["sup_text"]
+        del kwargs["sup_text"]
         super().__init__(
             MDSnackbarText(text=text),
+            MDSnackbarSupportingText(text=sup_text),
             *args,
             **kwargs,
         )
@@ -280,6 +283,8 @@ class MainScreen(MDScreen):
                     "Long term",
                 ]:
                     self.generate_button.disabled = False
+                    for ch in self.generate_button.children:
+                        ch.disabled = False
             case "Blend With Friend":
                 if (
                     self.time_range_button.children[0].text
@@ -289,6 +294,8 @@ class MainScreen(MDScreen):
                     and self.friend_playlist_button.children[0].text != "Select playlist..."
                 ):
                     self.generate_button.disabled = False
+                    for ch in self.generate_button.children:
+                        ch.disabled = False
 
     def get_playlists(self, username: str):
         playlists = self.playlist_creator.get_user_playlists(username)
@@ -340,12 +347,14 @@ class MainScreen(MDScreen):
 
         if playlist:
             PlaylistCreatorSnackbar(
-                text=f"Playlist {playlist_name} is successfully generated. Enjoy!",
+                text="Playlist is generated",
+                sup_text=f"Try out now: {playlist_name}!",
                 background_color=self.theme_cls.onPrimaryContainerColor,
             ).open()
         else:
             PlaylistCreatorSnackbar(
-                text="Something went wrong. :( Please, let know the developer: helgamogish@gmail.com",
+                text="Something went wrong :(",
+                sup_text="Please, contact: helgamogish@gmail.com",
                 background_color=self.theme_cls.onErrorColor,
             )
 
