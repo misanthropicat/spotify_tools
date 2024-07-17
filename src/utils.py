@@ -43,6 +43,7 @@ def get_system_info():
     return {
         "platform": platform.platform(),
         "architecture": platform.architecture(),
+        "machine": platform.machine(),
         "python_version": platform.python_version(),
         "java_version": platform.java_ver(),
         "libc_version": platform.libc_ver(),

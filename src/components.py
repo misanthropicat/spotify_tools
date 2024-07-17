@@ -202,7 +202,7 @@ class MainScreen(MDScreen):
         if text == "Blend With Friend":
             self.playlist_layout.clear_widgets()
             self.playlist_layout.add_widget(PlaylistCreatorLabel(text="Playlist"))
-            playlists = self.get_playlists(self.username)
+            playlists = self.get_playlists(self.app.username)
             self.playlist_button = PlaylistCreatorTextButton(text="Select playlist...")
             menu_items = [
                 {

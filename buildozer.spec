@@ -13,7 +13,7 @@ package.domain = org.misanthropicat
 source.dir = src
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,svg,png,json
+source.include_exts = py,svg,png,json,env
 
 # (list) List of inclusions using pattern matching
 source.include_patterns = data/*
@@ -37,7 +37,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3==3.11.9, kivy==2.3.0, spotipy, redis, https://github.com/kivymd/KivyMD/archive/master.zip, materialyoucolor, asynckivy, asyncgui
+requirements = python3==3.11.9, kivy==2.3.0, spotipy, redis, https://github.com/kivymd/KivyMD/archive/master.zip, materialyoucolor, asynckivy, asyncgui, python-dotenv
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -283,8 +283,7 @@ android.logcat_pid_only = True
 
 # (list) The Android archs to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
 # In past, was `android.arch` as we weren't supporting builds for multiple archs at the same time.
-android.archs = arm64-v8a
-#,armeabi-v7a,x86,x86_64
+android.archs = arm64-v8a,armeabi-v7a,x86,x86_64
 
 # (int) overrides automatic versionCode computation (used in build.gradle)
 # this is not the same as app version and should only be edited if you know what you're doing

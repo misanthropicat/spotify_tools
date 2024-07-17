@@ -1,4 +1,3 @@
-import logging
 import os
 import random
 import sys
@@ -7,8 +6,9 @@ import kivy
 
 kivy.require("2.3.0")
 
-from kivy.base import ExceptionHandler, ExceptionManager
+from dotenv import load_dotenv
 from kivy.config import Config
+from kivy.logger import Logger
 from kivy.utils import platform
 from kivymd.app import MDApp
 
@@ -21,7 +21,6 @@ else:
     from src import MainScreen, PlaylistCreator, handle_exception
 
 os.environ["KIVY_LOG_MODE"] = "MIXED"
-logging.basicConfig(level=logging.DEBUG)
 
 
 class PlaylistCreatorApp(MDApp):
@@ -70,6 +69,7 @@ class PlaylistCreatorApp(MDApp):
         self.theme_cls.primary_hue = "A200"
         self.set_theme("Dark")
         self.theme_cls.theme_style_switch_animation = True
+
         if platform == "android":
             from android import mActivity
             from android.storage import app_storage_path
@@ -77,17 +77,12 @@ class PlaylistCreatorApp(MDApp):
             context = mActivity.getApplicationContext()
             result = context.getExternalFilesDir(None)
             storage_path = str(result.toString()) if result else app_storage_path()
-
-            os.environ["SPOTIPY_CLIENT_ID"] = "b2ec6891adb04433bc49d681cda930ed"
-            os.environ["SPOTIPY_REDIRECT_URI"] = "http://localhost:8888/callback"
         else:
-            from dotenv import load_dotenv
-
             load_dotenv()
 
         self.storage_path = storage_path if platform == "android" else os.getcwd()
         os.environ["STORAGE_PATH"] = self.storage_path
-        logging.debug(
+        Logger.debug(
             f"Storage path: {self.storage_path}\nStorage path content: {os.listdir(self.storage_path)}"
         )
         self.icon = os.path.join(self.storage_path, "data", "icon.svg")
@@ -96,10 +91,21 @@ class PlaylistCreatorApp(MDApp):
         Config.set("kivy", "log_maxfiles", 100)
         Config.set("kivy", "log_level", "debug")
         Config.set("kivy", "log_enable", 1)
+
+        if platform == "android":
+            from android import mActivity
+
+            app_info = mActivity.getApplicationInfo()
+            data_dir = app_info.dataDir
+            Logger.debug(f"App data dir: {data_dir}\nData dir content: {os.listdir(data_dir)}")
+            load_dotenv(os.path.join(data_dir, "android.env"))
+
+        Logger.debug(f"Env vars: {os.environ.items()}")
         self.playlist_creator = PlaylistCreator(platform)
         self.username = self.playlist_creator.sp.me()["id"]
         return MainScreen()
 
+    @handle_exception
     def on_start(self):
         def on_start(*args):
             self.root.md_bg_color = self.theme_cls.backgroundColor
@@ -107,6 +113,7 @@ class PlaylistCreatorApp(MDApp):
     def on_pause(self):
         return True
 
+    @handle_exception
     def set_theme(self, theme):
         self.theme_cls.theme_style = theme
         self.theme_cls.primary_palette = random.choice(self.all_colors)
@@ -114,14 +121,10 @@ class PlaylistCreatorApp(MDApp):
         if self.root:
             self.root.md_bg_color = self.theme_cls.primaryContainerColor
 
+    @handle_exception
+    def run(self):
+        super().run()
 
-class E(ExceptionHandler):
-    def handle_exception(self, inst):
-        logging.exception("Exception caught by ExceptionHandler")
-        return ExceptionManager.PASS
-
-
-ExceptionManager.add_handler(E())
 
 if __name__ == "__main__":
     PlaylistCreatorApp().run()
