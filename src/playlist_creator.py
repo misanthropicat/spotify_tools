@@ -1,10 +1,9 @@
 import argparse
-
 import os
 import random
+from datetime import date
 
 import spotipy
-from datetime import date
 
 scopes = "playlist-modify-public playlist-modify-private user-top-read user-read-private"
 

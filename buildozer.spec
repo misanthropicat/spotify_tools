@@ -26,7 +26,7 @@ source.include_patterns = data/*
 
 # (list) List of exclusions using pattern matching
 # Do not prefix with './'
-source.exclude_patterns = preview_icons.py, migrator.py
+source.exclude_patterns = migrator.py
 
 # (str) Application versioning (method 1)
 version = 0.1
@@ -284,6 +284,7 @@ android.logcat_pid_only = True
 # (list) The Android archs to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
 # In past, was `android.arch` as we weren't supporting builds for multiple archs at the same time.
 android.archs = arm64-v8a
+#,armeabi-v7a,x86,x86_64
 
 # (int) overrides automatic versionCode computation (used in build.gradle)
 # this is not the same as app version and should only be edited if you know what you're doing
