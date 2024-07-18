@@ -1,6 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 from kivy_deps import sdl2, glew
 from kivymd import hooks_path as kivymd_hooks_path
+from PyInstaller.utils.hooks import collect_data_files
 
 path = os.path.abspath(".")
 
@@ -8,7 +9,7 @@ a = Analysis(
     ['src\\main.py', 'src\\components.py', 'src\\playlist_creator.py', 'src\\utils.py'],
     pathex=[path],
     binaries=[],
-    datas=[('desktop.env', '.env'), ('src\\data\\app_icon.png', 'app_icon.png')],
+    datas=[('.env', '.')],
     hiddenimports=[],
     hookspath=[kivymd_hooks_path],
     hooksconfig={},
