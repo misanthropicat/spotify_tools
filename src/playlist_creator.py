@@ -9,24 +9,20 @@ scopes = "playlist-modify-public playlist-modify-private user-top-read user-read
 
 
 class PlaylistCreator:
-    def __init__(self, platform, username=None):
-        if platform == "android":
+    def __init__(self, username=None):
+        self.sp = spotipy.Spotify(
+            auth_manager=spotipy.SpotifyPKCE(
+                client_id=os.environ["SPOTIPY_CLIENT_ID"],
+                redirect_uri=os.environ["SPOTIPY_REDIRECT_URI"],
+                scope=scopes,
+            )
+        )
+        if username:
             self.sp = spotipy.Spotify(
                 auth_manager=spotipy.SpotifyPKCE(
                     client_id=os.environ["SPOTIPY_CLIENT_ID"],
                     redirect_uri=os.environ["SPOTIPY_REDIRECT_URI"],
                     scope=scopes,
-                )
-            )
-        else:
-            self.sp = spotipy.Spotify(
-                auth_manager=spotipy.SpotifyOAuth(
-                    client_id=os.environ["SPOTIPY_CLIENT_ID"],
-                    client_secret=os.environ["SPOTIPY_CLIENT_SECRET"],
-                    redirect_uri=os.environ["SPOTIPY_REDIRECT_URI"],
-                    scope=scopes,
-                    show_dialog=True,
-                    open_browser=False,
                     username=username,
                 )
             )
@@ -184,7 +180,7 @@ def main():
         help='Applicable for "blend_with_friend". Name of current user playlist to blend with friend one',
     )
     args = parser.parse_args()
-    playlist_creator = PlaylistCreator(args.username)
+    playlist_creator = PlaylistCreator(username=args.username)
     top_tracks_ids = playlist_creator.get_top_tracks(args.time_range, int(args.limit))
 
     match args.command:

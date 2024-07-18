@@ -18,7 +18,9 @@ if platform == "android":
     from playlist_creator import PlaylistCreator
     from utils import handle_exception
 else:
-    from src import MainScreen, PlaylistCreator, handle_exception
+    from src.components import MainScreen
+    from src.playlist_creator import PlaylistCreator
+    from src.utils import handle_exception
 
 os.environ["KIVY_LOG_MODE"] = "MIXED"
 
@@ -102,7 +104,7 @@ class PlaylistCreatorApp(MDApp):
             load_dotenv(os.path.join(os.getcwd(), "android.env"))
 
         Logger.debug(f"Env vars: {os.environ.items()}")
-        self.playlist_creator = PlaylistCreator(platform)
+        self.playlist_creator = PlaylistCreator()
         self.username = self.playlist_creator.sp.me()["id"]
         return MainScreen()
 

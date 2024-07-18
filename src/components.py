@@ -1,6 +1,7 @@
 import random
 from datetime import date
 
+import kivymd.icon_definitions  # noqa
 from kivy.logger import Logger
 from kivymd.app import MDApp
 from kivymd.uix.appbar.appbar import (
