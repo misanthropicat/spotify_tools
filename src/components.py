@@ -1,6 +1,7 @@
 import random
 from datetime import date
 
+from kivy.logger import Logger
 from kivymd.app import MDApp
 from kivymd.uix.appbar.appbar import (
     MDActionTopAppBarButton,
@@ -16,7 +17,7 @@ from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.slider.slider import MDSlider, MDSliderHandle, MDSliderValueLabel
 from kivymd.uix.snackbar.snackbar import MDSnackbar, MDSnackbarSupportingText, MDSnackbarText
-from kivymd.uix.textfield import MDTextField
+from kivymd.uix.textfield import MDTextField, MDTextFieldHelperText
 
 __all__ = [
     "PlaylistCreatorLabel",
@@ -24,6 +25,26 @@ __all__ = [
     "PlaylistCreatorSnackbar",
     "MainScreen",
 ]
+
+
+class PlaylistCreatorError(Exception):
+    def __init__(
+        self,
+        message,
+        username,
+        command,
+        time_range,
+        playlist_name=None,
+        friend=None,
+        friends_playlist=None,
+    ):
+        super().__init__(message)
+        self.username = username
+        self.command = command
+        self.time_range = time_range
+        self.playlist_name = playlist_name
+        self.friend = friend
+        self.friends_playlist = friends_playlist
 
 
 class PlaylistCreatorLabel(MDLabel):
@@ -219,6 +240,7 @@ class MainScreen(MDScreen):
 
             self.friend_layout.add_widget(PlaylistCreatorLabel(text="Friend's username"))
             self.friend_input = MDTextField(
+                MDTextFieldHelperText(text="Non-existing user", mode="on_error"),
                 multiline=False,
                 hint_text="Spotify username of the user playlist of which should be blended with",
                 pos_hint={"center_x": 0.5, "center_y": 0.5},
@@ -343,8 +365,15 @@ class MainScreen(MDScreen):
         else:
             PlaylistCreatorSnackbar(
                 text="Something went wrong :(",
-                sup_text="Please, contact: helgamogish@gmail.com",
-                background_color=self.theme_cls.onErrorColor,
+                sup_text="Error report is sent to developer",
+                background_color=self.theme_cls.onErrorContainerColor,
+            ).open()
+            raise PlaylistCreatorError(
+                "Couldn't create playlist",
+                username=self.username,
+                command=self.command_button.children[0].text,
+                time_range=time_range,
+                playlist_name=playlist_name,
             )
 
     def time_range_callback(self, text):
@@ -359,23 +388,37 @@ class MainScreen(MDScreen):
 
     def show_friend_playlists(self, instance):
         if instance.text.strip():
-            self.friend_playlist_layout.add_widget(
-                PlaylistCreatorLabel(text="Friend's playlist name")
-            )
-            playlists = self.get_playlists(self.friend_input.text)
-            self.friend_playlist_button = PlaylistCreatorTextButton(text="Select playlist...")
-            menu_items = [
-                {
-                    "text": item,
-                    "on_release": lambda x=item: self.friend_playlist_callback(x),
-                }
-                for item in playlists
-            ]
-            self.friend_playlist_menu = MDDropdownMenu(
-                caller=self.friend_playlist_button, items=menu_items, hor_growth="left"
-            )
-            self.friend_playlist_button.bind(on_release=lambda x: self.friend_playlist_menu.open())
-            self.friend_playlist_layout.add_widget(self.friend_playlist_button)
+            friend = self.friend_input.text
+            try:
+                self.playlist_creator.sp.user(friend)
+            except Exception:
+                Logger.error(f"User {friend} seems to not exist")
+                PlaylistCreatorSnackbar(
+                    text=f"User with id {friend} seems to not exist",
+                    sup_text="Check your input and try again.",
+                    background_color=self.theme_cls.onErrorContainerColor,
+                ).open()
+                self.friend_input.error = True
+            else:
+                self.friend_playlist_layout.add_widget(
+                    PlaylistCreatorLabel(text="Friend's playlist name")
+                )
+                playlists = self.get_playlists(self.friend_input.text)
+                self.friend_playlist_button = PlaylistCreatorTextButton(text="Select playlist...")
+                menu_items = [
+                    {
+                        "text": item,
+                        "on_release": lambda x=item: self.friend_playlist_callback(x),
+                    }
+                    for item in playlists
+                ]
+                self.friend_playlist_menu = MDDropdownMenu(
+                    caller=self.friend_playlist_button, items=menu_items, hor_growth="left"
+                )
+                self.friend_playlist_button.bind(
+                    on_release=lambda x: self.friend_playlist_menu.open()
+                )
+                self.friend_playlist_layout.add_widget(self.friend_playlist_button)
 
     def friend_playlist_callback(self, text):
         self.friend_playlist_button.children[0].text = text

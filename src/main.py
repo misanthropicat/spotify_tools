@@ -98,7 +98,8 @@ class PlaylistCreatorApp(MDApp):
             app_info = mActivity.getApplicationInfo()
             data_dir = app_info.dataDir
             Logger.debug(f"App data dir: {data_dir}\nData dir content: {os.listdir(data_dir)}")
-            load_dotenv(os.path.join(data_dir, "android.env"))
+            Logger.debug(f"Cwd: {os.getcwd()}\nCwd content: {os.listdir(os.getcwd())}")
+            load_dotenv(os.path.join(os.getcwd(), "android.env"))
 
         Logger.debug(f"Env vars: {os.environ.items()}")
         self.playlist_creator = PlaylistCreator(platform)
