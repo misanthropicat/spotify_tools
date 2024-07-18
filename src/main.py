@@ -1,6 +1,7 @@
 import os
 import random
 import sys
+from turtle import dot
 
 import kivy
 
@@ -80,7 +81,9 @@ class PlaylistCreatorApp(MDApp):
             result = context.getExternalFilesDir(None)
             storage_path = str(result.toString()) if result else app_storage_path()
         else:
-            load_dotenv()
+            bundle_dir = sys._MEIPASS if getattr(sys, "frozen", False) else os.getcwd()
+            print(f"bundle dir is {bundle_dir}\nbundle dir content: {os.listdir(bundle_dir)}")
+            load_dotenv(dotenv_path=os.path.join(bundle_dir, ".env"))
 
         self.storage_path = storage_path if platform == "android" else os.getcwd()
         os.environ["STORAGE_PATH"] = self.storage_path
