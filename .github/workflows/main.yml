@@ -38,5 +38,5 @@ jobs:
               uses: ArtemSBulgakov/buildozer-action@v1
               id: buildozer
               with:
-                command: buildozer android debug
+                command: pip3 install --user --upgrade Cython==0.29.33 virtualenv; pip3 install --user --upgrade buildozer; buildozer -v android debug
                 buildozer_version: master
