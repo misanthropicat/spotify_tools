@@ -5,8 +5,9 @@ on:
             - opened
     push:
         paths:
-            - '.github/**'
             - 'buildozer.spec'
+            - 'playlistcreator.spec'
+            - 'src/**'
 
 jobs:
     build-android:
@@ -16,13 +17,19 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v2
-      
+
+            - name: Get Date
+              id: get-date
+              run: |
+                echo "datetime=$(/bin/date -u "+%Y%m%d%H")" >> $GITHUB_OUTPUT
+              shell: bash
+
             - name: Cache Buildozer global directory
               uses: actions/cache@v2
               with:
                 path: .buildozer_global
                 key: buildozer-global-${{ hashFiles('buildozer.spec') }}
-      
+
             - uses: actions/cache@v2
               with:
                 path: .buildozer
@@ -44,9 +51,39 @@ jobs:
             - name: Set up Python
               uses: actions/setup-python@v2
               with:
-                python-version: 3.11
+                python-version: '3.11'
                 architecture: x64
               
             - name: Push binary to data branch
               if: github.event_name == 'push'
               run: python master/.ci/move_binary.py "${{ steps.buildozer.outputs.filename }}" master data bin
+
+    pyinstaller-build:
+        name: Build for Windows
+        runs-on: windows-latest
+
+        steps:
+            - name: Build with PyInstaller
+              uses: sayyid5416/pyinstaller@v1
+              id: pyinstaller
+              with:
+                python_ver: '3.11'
+                spec: 'playlistcreator.spec'
+                requirements: 'requirements-dev.txt'
+                upload_exe_with_name: 'playlistcreator'
+
+            - name: Checkout
+              uses: actions/checkout@v2
+              with:
+                path: data
+                ref: data # Branch name
+                
+            - name: Set up Python
+              uses: actions/setup-python@v2
+              with:
+                python-version: '3.11'
+                architecture: x64
+                
+            - name: Push executable to data branch
+              if: github.event_name == 'push'
+              run: python master/.ci/move_binary.py "${{ steps.pyinstaller.outputs.filename }}" master data dist
