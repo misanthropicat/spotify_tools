@@ -5,8 +5,9 @@ on:
             - 'buildozer.spec'
             - 'playlistcreator.spec'
             - 'src/**'
-        branches:
-            - master
+            - '.github/**'
+        #branches:
+        #    - master
 
 jobs:
     build-android:
@@ -41,11 +42,8 @@ jobs:
                 command: sudo apt update && sudo apt install -y openjdk-17-jdk; pip3 install --user --upgrade Cython==0.29.33 virtualenv; pip3 install --user --upgrade buildozer; buildozer -v android debug
                 buildozer_version: master
 
-            - name: Checkout
-              uses: actions/checkout@v2
-              with:
-                path: data
-                ref: data # Branch name
+            - name: Switch to data branch
+              run: git switch data
               
             - name: Set up Python
               uses: actions/setup-python@v2
@@ -71,11 +69,8 @@ jobs:
                 requirements: 'requirements-dev.txt'
                 upload_exe_with_name: 'playlistcreator'
 
-            - name: Checkout
-              uses: actions/checkout@v2
-              with:
-                path: data
-                ref: data # Branch name
+            - name: Switch to data branch
+              run: git switch data
                 
             - name: Set up Python
               uses: actions/setup-python@v2

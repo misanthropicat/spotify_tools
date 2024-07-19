@@ -1,3 +1,4 @@
+-r requirements.txt
 Cython
 buildozer; platform_system == "Linux"
 pyinstaller; platform_system == "Windows"
