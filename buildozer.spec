@@ -37,7 +37,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3==3.11.9, kivy==2.3.0, spotipy, redis, https://github.com/kivymd/KivyMD/archive/master.zip, materialyoucolor, asynckivy, asyncgui, python-dotenv
+requirements = python3==3.11.9, kivy==2.3.0, spotipy, redis, https://github.com/kivymd/KivyMD/archive/master.zip, materialyoucolor, asynckivy, asyncgui, python-dotenv, pyjnius==1.5.0
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes

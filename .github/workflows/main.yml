@@ -6,6 +6,7 @@ on:
     push:
         paths:
             - '.github/**'
+            - 'buildozer.spec'
 
 jobs:
     build-android:
