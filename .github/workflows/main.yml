@@ -4,8 +4,9 @@ on:
         paths:
             - 'buildozer.spec'
             - 'src/**'
-        branches:
-            - master
+            - '.github/**'
+        #branches:
+        #    - master
 
 jobs:
     build-android:
