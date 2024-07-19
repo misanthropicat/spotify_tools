@@ -1,13 +1,12 @@
 name: Build
 on:
-    pull_request:
-        types:
-            - opened
     push:
         paths:
             - 'buildozer.spec'
             - 'playlistcreator.spec'
             - 'src/**'
+        branches:
+            - master
 
 jobs:
     build-android:
