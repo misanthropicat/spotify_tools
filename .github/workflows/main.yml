@@ -43,7 +43,7 @@ jobs:
                 buildozer_version: master
 
             - name: Switch to data branch
-              run: git switch data
+              run: git fetch && git switch data
               
             - name: Set up Python
               uses: actions/setup-python@v2
@@ -61,7 +61,7 @@ jobs:
 
         steps:
             - name: Build with PyInstaller
-              uses: sayyid5416/pyinstaller@v1
+              uses: sayyid5416/pyinstaller@v1.2.0
               id: pyinstaller
               with:
                 python_ver: '3.11'
@@ -70,7 +70,7 @@ jobs:
                 upload_exe_with_name: 'playlistcreator'
 
             - name: Switch to data branch
-              run: git switch data
+              run: git fetch && git switch data
                 
             - name: Set up Python
               uses: actions/setup-python@v2
@@ -80,4 +80,4 @@ jobs:
                 
             - name: Push executable to data branch
               if: github.event_name == 'push'
-              run: python master/.ci/move_binary.py "${{ steps.pyinstaller.outputs.filename }}" master data dist
+              run: python master/.ci/move_binary.py "${{ steps.pyinstaller.outputs.executable_path }}" master data dist
