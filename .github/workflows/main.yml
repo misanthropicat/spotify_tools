@@ -14,24 +14,17 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+
             - name: Install JDK 17
               uses: actions/setup-java@v4
               with:
                 distribution: 'oracle'
                 java-version: '17'
-                cache: 'gradle'
 
             - name: Install JRE 17
               run: sudo apt install openjdk-17-jre
-
-            - name: Checkout
-              uses: actions/checkout@v2
-
-            - name: Get Date
-              id: get-date
-              run: |
-                echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
-              shell: bash
       
             - name: Cache Buildozer global directory
               uses: actions/cache@v2
