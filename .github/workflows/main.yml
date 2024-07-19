@@ -4,9 +4,8 @@ on:
         paths:
             - 'buildozer.spec'
             - 'src/**'
-            - '.github/**'
-        #branches:
-        #    - master
+        branches:
+            - master
 
 jobs:
     build-android:
@@ -16,6 +15,8 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v2
+              with:
+                persist-credentials: false
 
             - name: Get Date
               id: get-date
@@ -38,14 +39,14 @@ jobs:
               uses: ArtemSBulgakov/buildozer-action@v1
               id: buildozer
               with:
-                command: sudo apt update && sudo apt install -y openjdk-17-jdk; pip3 install --user --upgrade Cython==0.29.33 virtualenv; pip3 install --user --upgrade buildozer; buildozer -v android debug
+                command: sudo apt update && sudo apt install -y openjdk-17-jdk; pip3 install --user --upgrade Cython==0.29.33 virtualenv; pip3 install --user --upgrade buildozer; buildozer android debug
                 buildozer_version: master
 
             - name: Switch to data branch
               run: |
-                git fetch origin
+                git config --global url."https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+                git fetch origin data
                 git checkout data
-                git pull origin data
               
             - name: Push binary to data branch
               if: github.event_name == 'push'
