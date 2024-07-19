@@ -15,9 +15,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
-              with:
-                persist-credentials: false
+              uses: actions/checkout@v3
 
             - name: Get Date
               id: get-date
@@ -43,12 +41,12 @@ jobs:
                 command: sudo apt update && sudo apt install -y openjdk-17-jdk; pip3 install --user --upgrade Cython==0.29.33 virtualenv; pip3 install --user --upgrade buildozer; buildozer android debug
                 buildozer_version: master
 
-            - name: Switch to data branch
-              run: |
-                git config --global url."https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
-                git fetch origin data
-                git checkout data
+            - name: Checkout
+              uses: actions/checkout@v2
+              with:
+                path: data
+                ref: data
               
             - name: Push binary to data branch
               if: github.event_name == 'push'
-              run: python master/.ci/move_binary.py "${{ steps.buildozer.outputs.filename }}" master data bin
+              run: python .ci/move_binary.py "${{ steps.buildozer.outputs.filename }}" master data bin
