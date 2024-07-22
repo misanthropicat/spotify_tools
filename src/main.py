@@ -1,5 +1,6 @@
 import os
 import random
+import shutil
 import sys
 
 import kivy
@@ -108,6 +109,7 @@ class PlaylistCreatorApp(MDApp):
         Logger.debug(f"Env vars: {os.environ.items()}")
         self.playlist_creator = PlaylistCreator()
         self.username = self.playlist_creator.sp.me()["id"]
+        self.platform = platform
         return MainScreen()
 
     @handle_exception
@@ -129,6 +131,19 @@ class PlaylistCreatorApp(MDApp):
     @handle_exception
     def run(self):
         super().run()
+
+    def open_spotify_app(self):
+        from jnius import autoclass
+
+        spotify_package_name = "com.spotify.music"
+
+        activity = autoclass("org.kivy.android.PythonActivity").mActivity
+        pm = activity.getPackageManager()
+
+        intent = pm.getLaunchIntentForPackage(spotify_package_name)
+        if not intent:
+            Logger.error(f"No launchable activity found for package {spotify_package_name}")
+        activity.startActivity(intent)
 
 
 if __name__ == "__main__":

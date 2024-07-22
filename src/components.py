@@ -17,7 +17,14 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.slider.slider import MDSlider, MDSliderHandle, MDSliderValueLabel
-from kivymd.uix.snackbar.snackbar import MDSnackbar, MDSnackbarSupportingText, MDSnackbarText
+from kivymd.uix.snackbar.snackbar import (
+    MDSnackbar,
+    MDSnackbarActionButton,
+    MDSnackbarActionButtonText,
+    MDSnackbarButtonContainer,
+    MDSnackbarSupportingText,
+    MDSnackbarText,
+)
 from kivymd.uix.textfield import MDTextField, MDTextFieldHelperText
 
 __all__ = [
@@ -77,12 +84,33 @@ class PlaylistCreatorSnackbar(MDSnackbar):
         del kwargs["text"]
         sup_text = kwargs["sup_text"]
         del kwargs["sup_text"]
-        super().__init__(
-            MDSnackbarText(text=text),
-            MDSnackbarSupportingText(text=sup_text),
-            *args,
-            **kwargs,
-        )
+        action_text = kwargs.get("action_text")
+        if action_text:
+            del kwargs["action_text"]
+        on_release = kwargs.get("on_release")
+        if on_release:
+            del kwargs["on_release"]
+        if action_text and on_release:
+            super().__init__(
+                MDSnackbarText(text=text),
+                MDSnackbarSupportingText(text=sup_text),
+                MDSnackbarButtonContainer(
+                    MDSnackbarActionButton(
+                        MDSnackbarActionButtonText(text=action_text),
+                        on_release=lambda x: on_release,
+                    ),
+                    pos_hint={"center_y": 0.5},
+                ),
+                *args,
+                **kwargs,
+            )
+        else:
+            super().__init__(
+                MDSnackbarText(text=text),
+                MDSnackbarSupportingText(text=sup_text),
+                *args,
+                **kwargs,
+            )
         self.duration = 7
         self.style = "elevated"
         self.pos_hint = {"center_x": 0.5, "center_y": 0.1}
@@ -358,11 +386,15 @@ class MainScreen(MDScreen):
                 playlist = self.playlist_creator.get_playlist_by_name(self.username, playlist_name)
 
         if playlist:
-            PlaylistCreatorSnackbar(
-                text="Playlist is generated",
-                sup_text=f"Try out now: {playlist_name}!",
-                background_color=self.theme_cls.onPrimaryContainerColor,
-            ).open()
+            kwargs = {
+                "text": "Playlist is generated",
+                "sup_text": f"Try out now: {playlist_name}!",
+                "background_color": self.theme_cls.onPrimaryContainerColor,
+            }
+            if self.app.platform == "android":
+                kwargs["action_text"] = ("Open Spotify",)
+                kwargs["on_release"] = self.app.open_spotify_app
+            PlaylistCreatorSnackbar(**kwargs).open()
         else:
             PlaylistCreatorSnackbar(
                 text="Something went wrong :(",
