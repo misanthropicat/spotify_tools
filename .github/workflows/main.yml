@@ -17,6 +17,12 @@ jobs:
               uses: actions/checkout@v4
               with:
                 path: master
+                fetch-depth: 0
+            
+            - name: Install GitVersion
+              uses: gittools/actions/gitversion/setup@v2.0.0
+              with:
+                versionSpec: '5.x'
 
             - name: Get Date
               id: get-date
@@ -35,12 +41,30 @@ jobs:
                 path: .buildozer
                 key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
 
+            - name: Determine Version
+              uses: gittools/actions/gitversion/execute@v2.0.0
+              id: version
+              with:
+                targetPath: ${{ github.workspace }}/master
+
+            - name: Update VERSION file
+              run: |
+                cd ${{ github.workspace }}/master
+                echo ${{ steps.version.outputs.majorMinorPatch }} > src/VERSION
+                git config user.email "github-action@users.noreply.github.com"
+                git config user.name "Github Action"
+                git config user.password "${{ github.token }}"
+                git add src/VERSION
+                git commit -m 'VERSION is updated by CI'
+                git push
+                cd ${{ github.workspace }}
+
             - name: Build with Buildozer
               uses: ArtemSBulgakov/buildozer-action@v1
               id: buildozer
               with:
                 repository_root: ./master
-                command: sudo apt update && sudo apt install -y openjdk-17-jdk; pip3 install --user --upgrade Cython==0.29.33 virtualenv; pip3 install --user --upgrade buildozer; buildozer android debug
+                command: sudo apt update && sudo apt install -y openjdk-17-jdk; pip3 install --user --upgrade Cython==0.29.33 virtualenv buildozer; buildozer android debug
                 buildozer_version: master
 
             - name: Checkout
@@ -50,5 +74,4 @@ jobs:
                 ref: data
               
             - name: Push binary to data branch
-              if: github.event_name == 'push'
               run: python master/.ci/move_binary.py "${{ steps.buildozer.outputs.filename }}" master data bin
