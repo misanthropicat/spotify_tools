@@ -29,11 +29,11 @@ source.include_patterns = data/*
 source.exclude_patterns = migrator.py
 
 # (str) Application versioning (method 1)
-version = 0.1
+# version = 0.1
 
 # (str) Application versioning (method 2)
-# version.regex = __version__ = ['"](.*)['"]
-# version.filename = %(source.dir)s/main.py
+version.regex = ([0-9]+).([0-9]+).([0-9]+)
+version.filename = %(source.dir)s/VERSION
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
