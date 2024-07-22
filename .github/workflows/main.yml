@@ -51,7 +51,7 @@ jobs:
             - name: Update VERSION file
               run: |
                 cd ${{ github.workspace }}/master
-                echo ${{ steps.version.outputs.majorMinorPatch }} >> src/VERSION
+                echo ${{ steps.version.outputs.majorMinorPatch }} > src/VERSION
                 git config user.email "github-action@users.noreply.github.com"
                 git config user.name "Github Action"
                 git config user.password "${{ github.token }}"
