@@ -4,6 +4,7 @@ on:
         paths:
             - 'buildozer.spec'
             - 'src/**'
+            - '.github/**'
         #branches:
         #    - master
 
