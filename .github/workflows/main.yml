@@ -22,7 +22,11 @@ jobs:
               with:
                 path: master
                 fetch-depth: 0
-                ref: ${{ github.head_ref }}
+            
+            - name: Install GitVersion
+              uses: gittools/actions/gitversion/setup@v2.0.0
+              with:
+                versionSpec: '5.x'
 
             - name: Get Date
               id: get-date
@@ -41,13 +45,15 @@ jobs:
                 path: .buildozer
                 key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
 
-            - name: Git Version
+            - name: Determine Version
+              uses: gittools/actions/gitversion/execute@v2.0.0
               id: version
-              uses: codacy/git-version@2.8.0
+              with:
+                targetPath: ${{ github.workspace }}/master"
 
             - name: Update VERSION file
               run: |
-                echo ${{ steps.version.outputs.version }} >> ./master/src/VERSION
+                echo ${{ steps.version.outputs.majorMinorPatch }} >> ./master/src/VERSION
                 git add ./master/src/VERSION
                 git commit -m 'VERSION is updated by CI'
                 git push
