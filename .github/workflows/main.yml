@@ -49,7 +49,6 @@ jobs:
               with:
                 path: data
                 ref: data
-                sparse-checkout: data
               
             - name: Push binary to data branch
               if: github.event_name == 'push'
