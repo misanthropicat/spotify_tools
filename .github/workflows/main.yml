@@ -13,6 +13,9 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
+            - name: Prepare environment
+              run: sudo apt-get install -y libevent-dev git
+
             - name: Checkout
               uses: actions/checkout@v4
               with:
@@ -44,19 +47,19 @@ jobs:
             - name: Update VERSION file
               run: echo ${{ steps.version.outputs.version }} >> ./master/src/VERSION
 
-            - name: Build with Buildozer
-              uses: ArtemSBulgakov/buildozer-action@v1
-              id: buildozer
-              with:
-                repository_root: ./master
-                command: sudo apt update && sudo apt install -y openjdk-17-jdk; pip3 install --user --upgrade Cython==0.29.33 virtualenv buildozer; buildozer android debug
-                buildozer_version: master
+#            - name: Build with Buildozer
+#              uses: ArtemSBulgakov/buildozer-action@v1
+#              id: buildozer
+#              with:
+#                repository_root: ./master
+#                command: sudo apt update && sudo apt install -y openjdk-17-jdk; pip3 install --user --upgrade Cython==0.29.33 virtualenv buildozer; buildozer android debug
+#                buildozer_version: master
 
-            - name: Checkout
-              uses: actions/checkout@v4
-              with:
-                path: data
-                ref: data
+#            - name: Checkout
+#              uses: actions/checkout@v4
+#              with:
+#                path: data
+#                ref: data
               
-            - name: Push binary to data branch
-              run: python master/.ci/move_binary.py "${{ steps.buildozer.outputs.filename }}" master data bin
+#            - name: Push binary to data branch
+#              run: python master/.ci/move_binary.py "${{ steps.buildozer.outputs.filename }}" master data bin
