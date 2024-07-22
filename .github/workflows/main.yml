@@ -16,6 +16,8 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v4
+              with:
+                path: master
 
             - name: Get Date
               id: get-date
@@ -38,6 +40,7 @@ jobs:
               uses: ArtemSBulgakov/buildozer-action@v1
               id: buildozer
               with:
+                repository_root: ./master
                 command: sudo apt update && sudo apt install -y openjdk-17-jdk; pip3 install --user --upgrade Cython==0.29.33 virtualenv; pip3 install --user --upgrade buildozer; buildozer android debug
                 buildozer_version: master
 
@@ -46,8 +49,8 @@ jobs:
               with:
                 path: data
                 ref: data
-                sparce-checkout: data
+                sparse-checkout: data
               
             - name: Push binary to data branch
               if: github.event_name == 'push'
-              run: python .ci/move_binary.py "${{ steps.buildozer.outputs.filename }}" master data bin
+              run: python master/.ci/move_binary.py "${{ steps.buildozer.outputs.filename }}" master data bin
