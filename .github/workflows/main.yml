@@ -48,10 +48,15 @@ jobs:
               with:
                 targetPath: ${{ github.workspace }}/master
 
+            - name: Configure Git credentials
+              uses: oleksiyrudenko/gha-git-credentials@v2-latest
+              with:
+                token: '${{ secrets.GITHUB_TOKEN }}'
+
             - name: Update VERSION file
               run: |
-                echo ${{ steps.version.outputs.majorMinorPatch }} >> ${{ github.workspace }}/master/src/VERSION
                 cd ${{ github.workspace }}/master
+                echo ${{ steps.version.outputs.majorMinorPatch }} >> src/VERSION
                 git add src/VERSION
                 git commit -m 'VERSION is updated by CI'
                 git push
