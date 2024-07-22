@@ -14,9 +14,6 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - name: Prepare environment
-              run: sudo apt-get install -y libevent-dev git
-
             - name: Checkout
               uses: actions/checkout@v4
               with:
@@ -49,7 +46,7 @@ jobs:
               uses: gittools/actions/gitversion/execute@v2.0.0
               id: version
               with:
-                targetPath: ${{ github.workspace }}/master"
+                targetPath: ${{ github.workspace }}/master
 
             - name: Update VERSION file
               run: |
