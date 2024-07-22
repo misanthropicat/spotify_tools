@@ -46,7 +46,11 @@ jobs:
               uses: codacy/git-version@2.8.0
 
             - name: Update VERSION file
-              run: echo ${{ steps.version.outputs.version }} >> ./master/src/VERSION
+              run: |
+                echo ${{ steps.version.outputs.version }} >> ./master/src/VERSION
+                git add ./master/src/VERSION
+                git commit -m 'VERSION is updated by CI'
+                git push
 
 #            - name: Build with Buildozer
 #              uses: ArtemSBulgakov/buildozer-action@v1
