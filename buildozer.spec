@@ -32,7 +32,7 @@ source.exclude_patterns = migrator.py
 # version = 0.1
 
 # (str) Application versioning (method 2)
-version.regex = ([0-9]+).([0-9]+).([0-9]+)
+version.regex = ([0-9]+.[0-9]+.[0-9]+)
 version.filename = %(source.dir)s/VERSION
 
 # (list) Application requirements
