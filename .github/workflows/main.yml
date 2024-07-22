@@ -50,10 +50,12 @@ jobs:
 
             - name: Update VERSION file
               run: |
-                echo ${{ steps.version.outputs.majorMinorPatch }} >> ./master/src/VERSION
-                git add ./master/src/VERSION
+                echo ${{ steps.version.outputs.majorMinorPatch }} >> ${{ github.workspace }}/master/src/VERSION
+                cd ${{ github.workspace }}/master
+                git add src/VERSION
                 git commit -m 'VERSION is updated by CI'
                 git push
+                cd ${{ github.workspace }}
 
 #            - name: Build with Buildozer
 #              uses: ArtemSBulgakov/buildozer-action@v1
