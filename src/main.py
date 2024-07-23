@@ -7,6 +7,7 @@ import kivy
 kivy.require("2.3.0")
 
 from dotenv import load_dotenv
+from kivy.base import ExceptionHandler, ExceptionManager
 from kivy.config import Config
 from kivy.logger import Logger
 from kivy.utils import platform
@@ -15,14 +16,32 @@ from kivymd.app import MDApp
 if platform == "android":
     sys.path.append(os.getcwd())
     from components import MainScreen
+    from exceptions import PlaylistCreatorError, UserInputError
     from playlist_creator import PlaylistCreator
-    from utils import handle_exception
+    from utils import send_crash_report
 else:
     from src.components import MainScreen
+    from src.exceptions import PlaylistCreatorError, UserInputError
     from src.playlist_creator import PlaylistCreator
-    from src.utils import handle_exception
+    from src.utils import send_crash_report
 
 os.environ["KIVY_LOG_MODE"] = "MIXED"
+
+
+class E(ExceptionHandler):
+    def handle_exception(self, inst):
+        Logger.exception(f"Caught {type(inst)}", exc_info=True)
+        if type(inst) == UserInputError:
+            return ExceptionManager.PASS
+        elif type(inst) == PlaylistCreatorError:
+            send_crash_report("", inst)
+            return ExceptionManager.PASS
+        else:
+            send_crash_report("", inst)
+            return ExceptionManager.RAISE
+
+
+ExceptionManager.add_handler(E())
 
 
 class PlaylistCreatorApp(MDApp):
@@ -66,7 +85,6 @@ class PlaylistCreatorApp(MDApp):
         "Turquoise",
     ]
 
-    @handle_exception
     def build(self):
         self.theme_cls.primary_hue = "A200"
         self.set_theme("Dark")
@@ -111,7 +129,6 @@ class PlaylistCreatorApp(MDApp):
         self.platform = platform
         return MainScreen()
 
-    @handle_exception
     def on_start(self):
         def on_start(*args):
             self.root.md_bg_color = self.theme_cls.backgroundColor
@@ -119,7 +136,6 @@ class PlaylistCreatorApp(MDApp):
     def on_pause(self):
         return True
 
-    @handle_exception
     def set_theme(self, theme):
         self.theme_cls.theme_style = theme
         self.theme_cls.primary_palette = random.choice(self.all_colors)
@@ -127,7 +143,6 @@ class PlaylistCreatorApp(MDApp):
         if self.root:
             self.root.md_bg_color = self.theme_cls.primaryContainerColor
 
-    @handle_exception
     def run(self):
         super().run()
 
