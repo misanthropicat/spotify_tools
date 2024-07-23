@@ -83,10 +83,11 @@ class PlaylistCreatorSnackbar(MDSnackbar):
                 MDSnackbarButtonContainer(
                     MDSnackbarActionButton(
                         MDSnackbarActionButtonText(text=action_text),
-                        on_release=lambda x: on_release,
+                        on_release=lambda x: on_release(),
                     ),
                     pos_hint={"center_y": 0.5},
                 ),
+                orientation="horizontal",
                 *args,
                 **kwargs,
             )
@@ -99,7 +100,7 @@ class PlaylistCreatorSnackbar(MDSnackbar):
             )
         self.duration = 7
         self.style = "elevated"
-        self.pos_hint = {"center_x": 0.5, "center_y": 0.1}
+        self.pos_hint = {"center_x": 0.5, "center_y": 0.15}
         self.size_hint_x = 0.7
 
 
@@ -380,13 +381,13 @@ class MainScreen(MDScreen):
                 )
 
             case "Blend With Friend":
-                playlist_name = self.playlist_creator.make_blend(
+                playlist = self.playlist_creator.make_blend(
                     self.friend_input.text,
                     self.friend_playlist_button.children[0].text,
                     self.playlist_button.children[0].text,
                     self.limit.value,
                 )
-                playlist = self.playlist_creator.get_playlist_by_name(self.username, playlist_name)
+                playlist_name = playlist["name"]
 
         if playlist:
             if self.app.platform == "android":
@@ -394,8 +395,8 @@ class MainScreen(MDScreen):
                     text="Playlist is generated",
                     sup_text=f"Try out now: {playlist_name}!",
                     background_color=self.theme_cls.onPrimaryContainerColor,
-                    action_text="Open Spotify",
-                    on_release=self.app.open_spotify_app,
+                    action_text="Play",
+                    on_release=self.app.play_playlist(playlist["id"]),
                 ).open()
             else:
                 PlaylistCreatorSnackbar(

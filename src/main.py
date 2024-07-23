@@ -146,17 +146,16 @@ class PlaylistCreatorApp(MDApp):
     def run(self):
         super().run()
 
-    def open_spotify_app(self):
+    def play_playlist(self, playlist_id):
         from jnius import autoclass
 
-        spotify_package_name = "com.spotify.music"
+        Intent = autoclass("android.content.Intent")
+        Uri = autoclass("android.net.Uri")
 
         activity = autoclass("org.kivy.android.PythonActivity").mActivity
-        pm = activity.getPackageManager()
-
-        intent = pm.getLaunchIntentForPackage(spotify_package_name)
-        if not intent:
-            Logger.error(f"No launchable activity found for package {spotify_package_name}")
+        intent = Intent()
+        intent.setAction(Intent.ACTION_VIEW)
+        intent.setData(Uri.parse(f"spotify:user:{self.username}:playlist:{playlist_id}"))
         activity.startActivity(intent)
 
 

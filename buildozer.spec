@@ -104,7 +104,7 @@ android.permissions = android.permission.INTERNET, android.permission.READ_EXTER
 android.api = 33
 
 # (int) Minimum API your APK / AAB will support.
-android.minapi = 21
+android.minapi = 28
 
 # (int) Android SDK version to use
 # android.sdk = 27
@@ -113,7 +113,7 @@ android.minapi = 21
 android.ndk = 25b
 
 # (int) Android NDK API to use. This is the minimum API your app will support, it should usually match android.minapi.
-android.ndk_api = 21
+android.ndk_api = 28
 
 # (bool) Use --private data storage (True) or --dir public storage (False)
 android.private_storage = True
@@ -206,7 +206,7 @@ android.add_resources = src/data/icon.svg
 # (bool) Enable AndroidX support. Enable when 'android.gradle_dependencies'
 # contains an 'androidx' package, or any package from Kotlin source.
 # android.enable_androidx requires android.api >= 28
-# android.enable_androidx = True
+android.enable_androidx = True
 
 # (list) add java compile options
 # this can for example be necessary when importing certain java libraries using the 'android.gradle_dependencies' option

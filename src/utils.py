@@ -62,5 +62,5 @@ def archive_kivy_logs():
 
 def send_crash_report(func, e=None):
     cur_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    text = f"{cur_time}\n{json.dumps(get_system_info(), indent=3)}\nException in {func.__module__}.{func.__name__}: {e}"
+    text = f"{cur_time}\n{json.dumps(get_system_info(), indent=3)}\nException in {func}: {e}"
     send_email("helgamogish@gmail.com", "Crash report", text, archive_kivy_logs())
