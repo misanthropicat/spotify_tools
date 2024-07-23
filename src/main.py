@@ -1,7 +1,6 @@
 import os
 import random
 import sys
-from turtle import dot
 
 import kivy
 
