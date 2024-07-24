@@ -4,6 +4,7 @@ on:
         paths:
             - 'buildozer.spec'
             - 'src/**'
+            - '.github/**'
         branches:
             - master
 
@@ -18,6 +19,7 @@ jobs:
               with:
                 path: master
                 fetch-depth: 0
+                ssh-key: ${{ secrets.DEPLOY_KEY }}
             
             - name: Install GitVersion
               uses: gittools/actions/gitversion/setup@v2.0.0
