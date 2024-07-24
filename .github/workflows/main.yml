@@ -56,6 +56,7 @@ jobs:
                 git config user.password "${{ github.token }}"
                 git add src/VERSION
                 git commit -m 'VERSION is updated by CI' && git push || echo "No new version detected" 
+                git tag ${{ steps.version.outputs.majorMinorPatch }} ${{ github.sha }}
                 cd ${{ github.workspace }}
 
             - name: Build with Buildozer
