@@ -59,6 +59,13 @@ jobs:
                 git tag ${{ steps.version.outputs.majorMinorPatch }} ${{ github.sha }}
                 cd ${{ github.workspace }}
 
+            - name: Dump env vars
+              run: |
+                echo "SPOTIPY_CLIENT_ID=${{ secrets.SPOTIPY_CLIENT_ID }}" >> master/src/android.env
+                echo "SPOTIPY_REDIRECT_URL=${{ secrets.SPOTIPY_REDIRECT_URL }}" >> master/src/android.env
+                echo "EMAIL_ADDRESS=${{ secrets.EMAIL_ADDRESS }}" >> master/src/android.env
+                echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> master/src/android.env
+
             - name: Build with Buildozer
               uses: ArtemSBulgakov/buildozer-action@v1
               id: buildozer
