@@ -3,6 +3,7 @@ from datetime import date
 
 import kivymd.icon_definitions  # noqa
 from kivy.logger import Logger
+from kivy.utils import platform
 from kivymd.app import MDApp
 from kivymd.uix.appbar.appbar import (
     MDActionTopAppBarButton,
@@ -17,8 +18,20 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.slider.slider import MDSlider, MDSliderHandle, MDSliderValueLabel
-from kivymd.uix.snackbar.snackbar import MDSnackbar, MDSnackbarSupportingText, MDSnackbarText
+from kivymd.uix.snackbar.snackbar import (
+    MDSnackbar,
+    MDSnackbarActionButton,
+    MDSnackbarActionButtonText,
+    MDSnackbarButtonContainer,
+    MDSnackbarSupportingText,
+    MDSnackbarText,
+)
 from kivymd.uix.textfield import MDTextField, MDTextFieldHelperText
+
+if platform == "android":
+    from exceptions import PlaylistCreatorError, UserInputError
+else:
+    from src.exceptions import PlaylistCreatorError, UserInputError
 
 __all__ = [
     "PlaylistCreatorLabel",
@@ -26,26 +39,6 @@ __all__ = [
     "PlaylistCreatorSnackbar",
     "MainScreen",
 ]
-
-
-class PlaylistCreatorError(Exception):
-    def __init__(
-        self,
-        message,
-        username,
-        command,
-        time_range,
-        playlist_name=None,
-        friend=None,
-        friends_playlist=None,
-    ):
-        super().__init__(message)
-        self.username = username
-        self.command = command
-        self.time_range = time_range
-        self.playlist_name = playlist_name
-        self.friend = friend
-        self.friends_playlist = friends_playlist
 
 
 class PlaylistCreatorLabel(MDLabel):
@@ -77,21 +70,44 @@ class PlaylistCreatorSnackbar(MDSnackbar):
         del kwargs["text"]
         sup_text = kwargs["sup_text"]
         del kwargs["sup_text"]
-        super().__init__(
-            MDSnackbarText(text=text),
-            MDSnackbarSupportingText(text=sup_text),
-            *args,
-            **kwargs,
-        )
+        action_text = kwargs.get("action_text")
+        if action_text:
+            del kwargs["action_text"]
+        on_release = kwargs.get("on_release")
+        if on_release:
+            del kwargs["on_release"]
+        if action_text and on_release:
+            super().__init__(
+                MDSnackbarText(text=text),
+                MDSnackbarSupportingText(text=sup_text),
+                MDSnackbarButtonContainer(
+                    MDSnackbarActionButton(
+                        MDSnackbarActionButtonText(text=action_text),
+                        on_release=lambda x: on_release(),
+                    ),
+                    pos_hint={"center_y": 0.5},
+                ),
+                orientation="horizontal",
+                *args,
+                **kwargs,
+            )
+        else:
+            super().__init__(
+                MDSnackbarText(text=text),
+                MDSnackbarSupportingText(text=sup_text),
+                *args,
+                **kwargs,
+            )
         self.duration = 7
         self.style = "elevated"
-        self.pos_hint = {"center_x": 0.5, "center_y": 0.1}
+        self.pos_hint = {"center_x": 0.5, "center_y": 0.15}
         self.size_hint_x = 0.7
 
 
 class MainScreen(MDScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.md_bg_color = self.theme_cls.secondaryContainerColor
         self.app = MDApp.get_running_app()
         self.app_top_bar = MDTopAppBar(
             MDTopAppBarTitle(text="PlaylistCreator", pos_hint={"center_x": 0.5}, halign="center"),
@@ -114,6 +130,7 @@ class MainScreen(MDScreen):
             pos_hint={"center_x": 0.5, "center_y": 0.95},
             spacing="16dp",
             padding="16dp",
+            md_bg_color=self.theme_cls.onSecondaryContainerColor,
         )
         self.add_widget(self.app_top_bar)
 
@@ -272,7 +289,7 @@ class MainScreen(MDScreen):
                 size_hint=(None, None),
                 font_size="26sp",
             ),
-            style="tonal",
+            style="elevated",
             height="56dp",
             theme_width="Custom",
             pos_hint={"center_x": 0.5, "center_y": 0.5},
@@ -316,6 +333,7 @@ class MainScreen(MDScreen):
     def generate_playlist(self, instance):
         time_range = self.time_range_button.children[0].text
         time_range_normalized = time_range.lower().replace(" ", "_")
+        playlist, playlist_name = None, None
         match self.command_button.children[0].text:
             case "Get Top":
                 top_tracks_ids = self.playlist_creator.get_top_tracks(
@@ -326,6 +344,13 @@ class MainScreen(MDScreen):
                     self.username, playlist_name
                 )
                 if not playlist:
+                    if len(top_tracks_ids) == 0:
+                        PlaylistCreatorSnackbar(
+                            text="Can't generate playlist!",
+                            sup_text="Not enough data exists for provided criteria.\nTry to change time range or listen more.",
+                            background_color=self.theme_cls.onErrorContainerColor,
+                        ).open()
+                        raise UserInputError(f"No top tracks found for {time_range_normalized}")
                     playlist = self.playlist_creator.create_playlist(
                         playlist_name,
                         f"Generated by PlaylistCreator for {time_range}",
@@ -336,6 +361,13 @@ class MainScreen(MDScreen):
                 top_tracks_ids = self.playlist_creator.get_top_tracks(
                     time_range_normalized, self.limit.value
                 )
+                if len(top_tracks_ids) < 5:
+                    PlaylistCreatorSnackbar(
+                        text="Can't generate playlist!",
+                        sup_text="Not enough data exists for provided criteria.\nTry to change time range or listen more.",
+                        background_color=self.theme_cls.onErrorContainerColor,
+                    ).open()
+                    raise UserInputError(f"Not enough top tracks found for {time_range_normalized}")
                 seed_tracks = random.choices(top_tracks_ids, k=5)
                 result = self.playlist_creator.get_recommendations(
                     seed_tracks=seed_tracks, limit=self.limit.value, country="SE"
@@ -349,20 +381,29 @@ class MainScreen(MDScreen):
                 )
 
             case "Blend With Friend":
-                playlist_name = self.playlist_creator.make_blend(
+                playlist = self.playlist_creator.make_blend(
                     self.friend_input.text,
                     self.friend_playlist_button.children[0].text,
                     self.playlist_button.children[0].text,
                     self.limit.value,
                 )
-                playlist = self.playlist_creator.get_playlist_by_name(self.username, playlist_name)
+                playlist_name = playlist["name"]
 
         if playlist:
-            PlaylistCreatorSnackbar(
-                text="Playlist is generated",
-                sup_text=f"Try out now: {playlist_name}!",
-                background_color=self.theme_cls.onPrimaryContainerColor,
-            ).open()
+            if self.app.platform == "android":
+                PlaylistCreatorSnackbar(
+                    text="Playlist is generated",
+                    sup_text=f"Try out now: {playlist_name}!",
+                    background_color=self.theme_cls.onPrimaryContainerColor,
+                    action_text="Play",
+                    on_release=self.app.play_playlist(playlist["id"]),
+                ).open()
+            else:
+                PlaylistCreatorSnackbar(
+                    text="Playlist is generated",
+                    sup_text=f"Try out now: {playlist_name}!",
+                    background_color=self.theme_cls.onPrimaryContainerColor,
+                ).open()
         else:
             PlaylistCreatorSnackbar(
                 text="Something went wrong :(",

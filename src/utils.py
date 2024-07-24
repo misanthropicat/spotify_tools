@@ -37,6 +37,9 @@ def send_email(address, subject, text, attachment_path=None):
             logging.info(f"{subject} email is sent successfully to {address}!")
     except Exception as e:
         logging.exception(f"Failed to send email: {e}", exc_info=True)
+    else:
+        if os.path.exists(attachment_path):
+            os.remove(attachment_path)
 
 
 def get_system_info():
@@ -59,22 +62,5 @@ def archive_kivy_logs():
 
 def send_crash_report(func, e=None):
     cur_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    text = f"{cur_time}\n{json.dumps(get_system_info(), indent=3)}\nException in {func.__module__}.{func.__name__}: {e}"
+    text = f"{cur_time}\n{json.dumps(get_system_info(), indent=3)}\nException in {func}: {e}"
     send_email("helgamogish@gmail.com", "Crash report", text, archive_kivy_logs())
-
-
-def handle_exception(func):
-    def wrapper(self, *args, **kwargs):
-        logging.debug(f"Starting {func.__module__}.{func.__name__}...")
-        try:
-            result = func(self, *args, **kwargs)
-        except Exception as e:
-            logging.exception(f"{func.__module__}.{func.__name__} thrown {type(e)}", exc_info=True)
-            logging.info("Sending email to the developer...")
-            send_crash_report(func, e)
-            return None
-        else:
-            logging.info(f"{func.__name__} returned result {result}")
-            return result
-
-    return wrapper

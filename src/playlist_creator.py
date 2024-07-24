@@ -52,7 +52,7 @@ class PlaylistCreator:
     def get_todays_top_playlist(self, username: str, playlist_name: str):
         top_playlist = self.get_playlist_by_name(username, playlist_name)
         if top_playlist:
-            return top_playlist["name"]
+            return top_playlist
         return None
 
     def get_recommendations(
@@ -74,7 +74,7 @@ class PlaylistCreator:
                 )
         else:
             self.sp.playlist_add_items(result["id"], track_ids_list)
-        return result["name"]
+        return result
 
     def get_user_playlists(self, username: str):
         return self.sp.user_playlists(username)

@@ -37,7 +37,7 @@ version.filename = %(source.dir)s/VERSION
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3==3.11.9, kivy==2.3.0, spotipy, redis, https://github.com/kivymd/KivyMD/archive/master.zip, materialyoucolor, asynckivy, asyncgui, python-dotenv, pyjnius==1.5.0
+requirements = python3==3.11.9, kivy==2.3.0, spotipy==2.24.0, redis==5.0.7, https://github.com/kivymd/KivyMD/archive/master.zip, materialyoucolor==2.0.9, asynckivy==0.6.3, asyncgui==0.6.3, python-dotenv==1.0.1, pyjnius==1.6.1
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -104,7 +104,7 @@ android.permissions = android.permission.INTERNET, android.permission.READ_EXTER
 android.api = 33
 
 # (int) Minimum API your APK / AAB will support.
-android.minapi = 21
+android.minapi = 28
 
 # (int) Android SDK version to use
 # android.sdk = 27
@@ -113,7 +113,7 @@ android.minapi = 21
 android.ndk = 25b
 
 # (int) Android NDK API to use. This is the minimum API your app will support, it should usually match android.minapi.
-android.ndk_api = 21
+android.ndk_api = 28
 
 # (bool) Use --private data storage (True) or --dir public storage (False)
 android.private_storage = True
@@ -206,7 +206,7 @@ android.add_resources = src/data/icon.svg
 # (bool) Enable AndroidX support. Enable when 'android.gradle_dependencies'
 # contains an 'androidx' package, or any package from Kotlin source.
 # android.enable_androidx requires android.api >= 28
-# android.enable_androidx = True
+android.enable_androidx = True
 
 # (list) add java compile options
 # this can for example be necessary when importing certain java libraries using the 'android.gradle_dependencies' option

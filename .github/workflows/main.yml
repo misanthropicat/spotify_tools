@@ -1,4 +1,4 @@
-name: Build
+name: Build and publish
 on:
     push:
         paths:
@@ -55,7 +55,7 @@ jobs:
                 git config user.name "Github Action"
                 git config user.password "${{ github.token }}"
                 git add src/VERSION
-                git commit -m 'VERSION is updated by CI' && git push || echo "No new version is detected"
+                git commit -m 'VERSION is updated by CI' && git push || echo "No new version detected" 
                 cd ${{ github.workspace }}
 
             - name: Build with Buildozer
