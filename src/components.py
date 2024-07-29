@@ -2,6 +2,7 @@ import random
 from datetime import date
 
 import kivymd.icon_definitions  # noqa
+from kivy.core.window import Window
 from kivy.logger import Logger
 from kivy.utils import platform
 from kivymd.app import MDApp
@@ -104,6 +105,20 @@ class PlaylistCreatorSnackbar(MDSnackbar):
         self.size_hint_x = 0.7
 
 
+class PlaylistCreatorInput(MDTextField):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.multiline = False
+        self.pos_hint = {"center_x": 0.5, "center_y": 0.5}
+        if not kwargs.get("size_hint_x"):
+            self.size_hint_x = 0.6
+        self.size_hint_min_x = 50
+
+    def on_touch_down(self, touch):
+        Window.softinput_mode = "pan"
+        super().on_touch_down(touch)
+
+
 class MainScreen(MDScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -161,7 +176,9 @@ class MainScreen(MDScreen):
         self.friend_playlist_layout = MDBoxLayout(size_hint=(1, 1), pos_hint={"x": 0.1, "y": 0.1})
         self.grid_layout.add_widget(self.friend_playlist_layout)
 
-        self.generate_button = None  # placeholder
+        # placeholders
+        self.generate_button = None
+        self.friend_playlist_button = None
 
         self.command_layout.add_widget(PlaylistCreatorLabel(text="Command"))
 
@@ -226,15 +243,11 @@ class MainScreen(MDScreen):
         self.time_range_layout.add_widget(self.time_range_button)
 
         self.limit_layout.add_widget(PlaylistCreatorLabel(text="Amount of tracks"))
-        self.limit = MDSlider(
-            MDSliderValueLabel(),
-            MDSliderHandle(),
-            min=1,
-            max=1000,
-            step=1,
-            value=50,
-            size_hint_x=0.75,
-            pos_hint={"center_x": 0.5, "center_y": 0.5},
+        self.limit = PlaylistCreatorInput(
+            hint_text="How many tracks a playlist should contain",
+            text="50",
+            input_filter="int",
+            size_hint_x=0.1,
         )
         self.limit_layout.add_widget(self.limit)
 
@@ -257,12 +270,8 @@ class MainScreen(MDScreen):
             self.playlist_layout.add_widget(self.playlist_button)
 
             self.friend_layout.add_widget(PlaylistCreatorLabel(text="Friend's username"))
-            self.friend_input = MDTextField(
-                MDTextFieldHelperText(text="Non-existing user", mode="on_error"),
-                multiline=False,
-                hint_text="Spotify username of the user playlist of which should be blended with",
-                pos_hint={"center_x": 0.5, "center_y": 0.5},
-                size_hint_x=0.6,
+            self.friend_input = PlaylistCreatorInput(
+                hint_text="Spotify username of the user playlist of which should be blended with"
             )
             self.friend_ok_button = MDIconButton(
                 icon="check-outline",
@@ -320,7 +329,7 @@ class MainScreen(MDScreen):
                     in ["Short term", "Medium term", "Long term"]
                     and self.playlist_button.children[0].text != "Select playlist..."
                     and self.friend_input.text
-                    and self.friend_playlist_button.children[0].text != "Select playlist..."
+                    and self.friend_playlist_button
                 ):
                     self.generate_button.disabled = False
                     for ch in self.generate_button.children:
@@ -337,7 +346,7 @@ class MainScreen(MDScreen):
         match self.command_button.children[0].text:
             case "Get Top":
                 top_tracks_ids = self.playlist_creator.get_top_tracks(
-                    time_range_normalized, self.limit.value
+                    time_range_normalized, int(self.limit.text)
                 )
                 playlist_name = f"top_{time_range_normalized}_{str(date.today())}"
                 playlist = self.playlist_creator.get_todays_top_playlist(
@@ -359,7 +368,7 @@ class MainScreen(MDScreen):
 
             case "Get Recommendations":
                 top_tracks_ids = self.playlist_creator.get_top_tracks(
-                    time_range_normalized, self.limit.value
+                    time_range_normalized, int(self.limit.text)
                 )
                 if len(top_tracks_ids) < 5:
                     PlaylistCreatorSnackbar(
@@ -370,7 +379,7 @@ class MainScreen(MDScreen):
                     raise UserInputError(f"Not enough top tracks found for {time_range_normalized}")
                 seed_tracks = random.choices(top_tracks_ids, k=5)
                 result = self.playlist_creator.get_recommendations(
-                    seed_tracks=seed_tracks, limit=self.limit.value, country="SE"
+                    seed_tracks=seed_tracks, limit=int(self.limit.text), country="SE"
                 )
                 tracks_ids = [t["id"] for t in result["tracks"]]
                 playlist_name = f"recommendations_{str(date.today())}"
@@ -385,7 +394,7 @@ class MainScreen(MDScreen):
                     self.friend_input.text,
                     self.friend_playlist_button.children[0].text,
                     self.playlist_button.children[0].text,
-                    self.limit.value,
+                    int(self.limit.text),
                 )
                 playlist_name = playlist["name"]
 
@@ -436,11 +445,12 @@ class MainScreen(MDScreen):
             except Exception:
                 Logger.error(f"User {friend} seems to not exist")
                 PlaylistCreatorSnackbar(
-                    text=f"User with id {friend} seems to not exist",
-                    sup_text="Check your input and try again.",
+                    text="User seems to not exist",
+                    sup_text=f"User with id {friend} is not found. Check your input and try again.",
                     background_color=self.theme_cls.onErrorContainerColor,
                 ).open()
                 self.friend_input.error = True
+                self.friend_playlist_layout.clear_widgets()
             else:
                 self.friend_playlist_layout.add_widget(
                     PlaylistCreatorLabel(text="Friend's playlist name")
