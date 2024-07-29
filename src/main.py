@@ -31,9 +31,9 @@ os.environ["KIVY_LOG_MODE"] = "MIXED"
 class E(ExceptionHandler):
     def handle_exception(self, inst):
         Logger.exception(f"Caught {type(inst)}", exc_info=True)
-        if type(inst) == UserInputError:
+        if isinstance(inst, UserInputError):
             return ExceptionManager.PASS
-        elif type(inst) == PlaylistCreatorError:
+        elif isinstance(inst, PlaylistCreatorError):
             send_crash_report("", inst)
             return ExceptionManager.PASS
         else:
