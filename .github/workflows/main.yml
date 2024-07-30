@@ -4,7 +4,6 @@ on:
         paths:
           - 'buildozer.spec'
           - 'src/**'
-          - '.github/**'
         branches:
           - master
         tags-ignore:
@@ -59,7 +58,7 @@ jobs:
                 git config user.name "Github Action"
                 git config user.password "${{ github.token }}"
                 git add src/VERSION
-                git commit -m 'VERSION is updated by CI' && git push || echo "No new version detected" 
+                git commit -m '[skip ci] VERSION is updated by CI' && git push || echo "No new version detected" 
                 git tag ${{ steps.version.outputs.majorMinorPatch }} ${{ github.sha }}
                 git push origin tag ${{ steps.version.outputs.majorMinorPatch }}
                 cd ${{ github.workspace }}
