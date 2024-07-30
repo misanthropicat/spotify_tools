@@ -59,6 +59,7 @@ jobs:
                 git add src/VERSION
                 git commit -m 'VERSION is updated by CI' && git push || echo "No new version detected" 
                 git tag ${{ steps.version.outputs.majorMinorPatch }} ${{ github.sha }}
+                git push origin tag ${{ steps.version.outputs.majorMinorPatch }}
                 cd ${{ github.workspace }}
 
             - name: Dump env vars
