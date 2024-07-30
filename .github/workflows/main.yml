@@ -2,11 +2,13 @@ name: Build and publish
 on:
     push:
         paths:
-            - 'buildozer.spec'
-            - 'src/**'
-            - '.github/**'
+          - 'buildozer.spec'
+          - 'src/**'
+          - '.github/**'
         branches:
-            - master
+          - master
+        tags-ignore:
+          - '*'
 
 jobs:
     build-android:
