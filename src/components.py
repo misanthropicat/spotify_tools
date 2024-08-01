@@ -4,6 +4,7 @@ from datetime import date
 import kivymd.icon_definitions  # noqa
 from kivy.core.window import Window
 from kivy.logger import Logger
+from kivy.properties import BooleanProperty, StringProperty
 from kivy.utils import platform
 from kivymd.app import MDApp
 from kivymd.uix.appbar.appbar import (
@@ -18,7 +19,7 @@ from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.label import MDLabel
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.screen import MDScreen
-from kivymd.uix.slider.slider import MDSlider, MDSliderHandle, MDSliderValueLabel
+from kivymd.uix.selectioncontrol.selectioncontrol import MDCheckbox
 from kivymd.uix.snackbar.snackbar import (
     MDSnackbar,
     MDSnackbarActionButton,
@@ -27,7 +28,7 @@ from kivymd.uix.snackbar.snackbar import (
     MDSnackbarSupportingText,
     MDSnackbarText,
 )
-from kivymd.uix.textfield import MDTextField, MDTextFieldHelperText
+from kivymd.uix.textfield import MDTextField
 
 if platform == "android":
     from exceptions import PlaylistCreatorError, UserInputError
@@ -117,6 +118,32 @@ class PlaylistCreatorInput(MDTextField):
     def on_touch_down(self, touch):
         Window.softinput_mode = "pan"
         super().on_touch_down(touch)
+
+
+class CheckItem(MDBoxLayout):
+    text = StringProperty()
+    group = StringProperty()
+    id = StringProperty()
+    active = BooleanProperty(False)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.orientation = "horizontal"
+        self.pos_hint = {"center_y": 0.5, "right_x": 1}
+        self.spacing = "12dp"
+        self.padding = "12dp"
+
+        self.checkbox = MDCheckbox(
+            group=self.group, active=self.active, pos_hint=self.pos_hint, id=self.id
+        )
+        self.checkbox.bind(active=self.set_active)
+        self.label = PlaylistCreatorLabel(text=self.text, pos_hint=self.pos_hint)
+
+        self.add_widget(self.checkbox)
+        self.add_widget(self.label)
+
+    def set_active(self, checkbox, value):
+        self.active = value
 
 
 class MainScreen(MDScreen):
@@ -224,16 +251,16 @@ class MainScreen(MDScreen):
         self.time_range_button = PlaylistCreatorTextButton(text="Choose an interval...")
         time_range_items = [
             {
-                "text": "Short term",
-                "on_release": lambda x="Short term": self.time_range_callback(x),
+                "text": "Short term (~4 weeks)",
+                "on_release": lambda x="Short term (~4 weeks)": self.time_range_callback(x),
             },
             {
-                "text": "Medium term",
-                "on_release": lambda x="Medium term": self.time_range_callback(x),
+                "text": "Medium term (~6 months)",
+                "on_release": lambda x="Medium term (~6 months)": self.time_range_callback(x),
             },
             {
-                "text": "Long term",
-                "on_release": lambda x="Long term": self.time_range_callback(x),
+                "text": "Long term (~1 year)",
+                "on_release": lambda x="Long term (~1 year)": self.time_range_callback(x),
             },
         ]
         self.time_range_menu = MDDropdownMenu(
@@ -247,9 +274,28 @@ class MainScreen(MDScreen):
             hint_text="How many tracks a playlist should contain",
             text="50",
             input_filter="int",
-            size_hint_x=0.1,
+            size_hint_x=0.2,
         )
         self.limit_layout.add_widget(self.limit)
+
+        if text == "Get Recommendations":
+            self.playlist_layout.clear_widgets()
+            self.playlist_layout.add_widget(PlaylistCreatorLabel(text="Based on top..."))
+            check_items_layout = MDBoxLayout(
+                orientation="vertical",
+                padding="12dp",
+                spacing="12dp",
+                pos_hint={"right_x": 1, "center_y": 0.5},
+                size_hint=(0.3, 1),
+                size_hint_min_x="200dp",
+            )
+            self.seed_type_tracks = CheckItem(
+                text="tracks", active=True, id="top_tracks", group="seed_type"
+            )
+            check_items_layout.add_widget(self.seed_type_tracks)
+            self.seed_type_artists = CheckItem(text="artists", id="top_artists", group="seed_type")
+            check_items_layout.add_widget(self.seed_type_artists)
+            self.playlist_layout.add_widget(check_items_layout)
 
         if text == "Blend With Friend":
             self.playlist_layout.clear_widgets()
@@ -316,9 +362,9 @@ class MainScreen(MDScreen):
         match command:
             case "Get Top" | "Get Recommendations":
                 if self.time_range_button.children[0].text in [
-                    "Short term",
-                    "Medium term",
-                    "Long term",
+                    "Short term (~4 weeks)",
+                    "Medium term (~6 months)",
+                    "Long term (~1 year)",
                 ]:
                     self.generate_button.disabled = False
                     for ch in self.generate_button.children:
@@ -326,7 +372,11 @@ class MainScreen(MDScreen):
             case "Blend With Friend":
                 if (
                     self.time_range_button.children[0].text
-                    in ["Short term", "Medium term", "Long term"]
+                    in [
+                        "Short term (~4 weeks)",
+                        "Medium term (~6 months)",
+                        "Long term (~1 year)",
+                    ]
                     and self.playlist_button.children[0].text != "Select playlist..."
                     and self.friend_input.text
                     and self.friend_playlist_button
@@ -341,7 +391,7 @@ class MainScreen(MDScreen):
 
     def generate_playlist(self, instance):
         time_range = self.time_range_button.children[0].text
-        time_range_normalized = time_range.lower().replace(" ", "_")
+        time_range_normalized = time_range.split(" (")[0].lower().replace(" ", "_")
         playlist, playlist_name = None, None
         match self.command_button.children[0].text:
             case "Get Top":
@@ -367,25 +417,43 @@ class MainScreen(MDScreen):
                     )
 
             case "Get Recommendations":
-                top_tracks_ids = self.playlist_creator.get_top_tracks(
-                    time_range_normalized, int(self.limit.text)
-                )
-                if len(top_tracks_ids) < 5:
-                    PlaylistCreatorSnackbar(
-                        text="Can't generate playlist!",
-                        sup_text="Not enough data exists for provided criteria.\nTry to change time range or listen more.",
-                        background_color=self.theme_cls.onErrorContainerColor,
-                    ).open()
-                    raise UserInputError(f"Not enough top tracks found for {time_range_normalized}")
-                seed_tracks = random.choices(top_tracks_ids, k=5)
-                result = self.playlist_creator.get_recommendations(
-                    seed_tracks=seed_tracks, limit=int(self.limit.text), country="SE"
-                )
+                description = "Generated by PlaylistCreator based on "
+                if self.seed_type_tracks.active:
+                    top_tracks_ids = self.playlist_creator.get_top_tracks(
+                        time_range_normalized, int(self.limit.text)
+                    )
+                    if len(top_tracks_ids) < 5:
+                        PlaylistCreatorSnackbar(
+                            text="Can't generate playlist!",
+                            sup_text="Not enough data exists for provided criteria.\nTry to change time range or listen more.",
+                            background_color=self.theme_cls.onErrorContainerColor,
+                        ).open()
+                        raise UserInputError(
+                            f"Not enough top tracks found for {time_range_normalized}"
+                        )
+                    seed_tracks_ids = random.choices(top_tracks_ids, k=5)
+                    result = self.playlist_creator.get_recommendations(
+                        seed_tracks=seed_tracks_ids, limit=int(self.limit.text), country="SE"
+                    )
+                    seed_tracks = [self.playlist_creator.sp.track(i) for i in seed_tracks_ids]
+                    artist_tracks = [
+                        f"{t['artists'][0]['name']} - {t['name']}" for t in seed_tracks
+                    ]
+                    description += f"tracks from my {time_range} top: {', '.join(artist_tracks)}"
+                else:
+                    top_artists_ids = self.playlist_creator.get_top_artists(
+                        time_range_normalized, 5
+                    )
+                    result = self.playlist_creator.get_recommendations(
+                        seed_artists=top_artists_ids, limit=int(self.limit.text), country="SE"
+                    )
+                    seed_artists = [self.playlist_creator.sp.artist(i) for i in top_artists_ids]
+                    description += f"my {time_range} top artists: {', '.join([a['name'] for a in seed_artists])}"
                 tracks_ids = [t["id"] for t in result["tracks"]]
                 playlist_name = f"recommendations_{str(date.today())}"
                 playlist = self.playlist_creator.create_playlist(
                     playlist_name,
-                    f"Generated by PlaylistCreator based on 5 random tracks from my current {time_range} top",
+                    description,
                     tracks_ids,
                 )
 
