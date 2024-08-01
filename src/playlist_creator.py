@@ -49,6 +49,28 @@ class PlaylistCreator:
 
         return accumulated_results
 
+    def get_top_artists(self, range: str, limit=20, offset=0, accumulated_results=None):
+        if accumulated_results is None:
+            accumulated_results = []
+
+        batch_limit = min(20, limit)
+        results = self.sp.current_user_top_artists(
+            time_range=range, limit=batch_limit, offset=offset
+        )
+        if not results or not results["items"]:
+            return accumulated_results
+
+        accumulated_results.extend([i["id"] for i in results["items"]])
+        if len(results["items"]) < batch_limit:
+            return accumulated_results
+
+        if limit > batch_limit:
+            return self.get_top_artists(
+                range, limit - batch_limit, offset + batch_limit, accumulated_results
+            )
+
+        return accumulated_results
+
     def get_todays_top_playlist(self, username: str, playlist_name: str):
         top_playlist = self.get_playlist_by_name(username, playlist_name)
         if top_playlist:
