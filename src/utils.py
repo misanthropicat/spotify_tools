@@ -11,6 +11,8 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+import requests
+
 
 def send_email(address, subject, text, attachment_path=None):
     msg = MIMEMultipart()
@@ -64,3 +66,9 @@ def send_crash_report(func, e=None):
     cur_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     text = f"{cur_time}\n{json.dumps(get_system_info(), indent=3)}\nException in {func}: {e}"
     send_email("helgamogish@gmail.com", "Crash report", text, archive_kivy_logs())
+
+
+def download_from_url(url: str, dest_path: str):
+    response = requests.get(url)
+    with open(dest_path, "wb") as f:
+        f.write(response.content)
