@@ -1,3 +1,4 @@
+import os
 import random
 from datetime import date
 
@@ -5,16 +6,19 @@ import kivymd.icon_definitions  # noqa
 from kivy.core.window import Window
 from kivy.logger import Logger
 from kivy.properties import BooleanProperty, StringProperty
+from kivy.uix.widget import Widget
 from kivy.utils import platform
 from kivymd.app import MDApp
 from kivymd.uix.appbar.appbar import (
     MDActionTopAppBarButton,
     MDTopAppBar,
+    MDTopAppBarLeadingButtonContainer,
     MDTopAppBarTitle,
     MDTopAppBarTrailingButtonContainer,
 )
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDButton, MDButtonIcon, MDButtonText, MDIconButton
+from kivymd.uix.fitimage import FitImage
 from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.label import MDLabel
 from kivymd.uix.menu import MDDropdownMenu
@@ -32,8 +36,10 @@ from kivymd.uix.textfield import MDTextField
 
 if platform == "android":
     from exceptions import PlaylistCreatorError, UserInputError
+    from utils import download_from_url
 else:
     from src.exceptions import PlaylistCreatorError, UserInputError
+    from src.utils import download_from_url
 
 __all__ = [
     "PlaylistCreatorLabel",
@@ -146,34 +152,67 @@ class CheckItem(MDBoxLayout):
         self.active = value
 
 
+class PlaylistCreatorTopBar(MDTopAppBar):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.type = "small"
+        self.size_hint_x = 1.0
+        self.pos_hint = {"center_x": 0.5, "top": 1}
+        app = MDApp.get_running_app()
+        self.md_bg_color = app.theme_cls.onSecondaryContainerColor
+        self.remove_widget(self.ids.title_box)
+
+        user_icon_url = app.playlist_creator.sp.me()["images"][0]["url"]
+        download_from_url(user_icon_url, os.path.join(app.storage_path, "user-icon.png"))
+        leading_button = MDTopAppBarLeadingButtonContainer(
+            FitImage(
+                source=os.path.join(app.storage_path, "user-icon.png"),
+                size_hint=(None, None),
+                pos_hint={"left_x": 0.0, "center_y": 0.5},
+                radius=["36dp", "36dp", "36dp", "36dp"],
+                fit_mode="contain",
+                size=("64dp", "64dp"),
+            ),
+            size_hint_x=0.5,
+        )
+        self.add_widget(leading_button)
+
+        title = MDTopAppBarTitle(
+            text="Playlist Creator",
+            pos_hint={"center_x": 0.5},
+            halign="center",
+        )
+        self.add_widget(title)
+
+        trailing_buttons = MDTopAppBarTrailingButtonContainer(
+            Widget(size_hint=(0.8, None)),
+            MDActionTopAppBarButton(
+                id="light",
+                icon="weather-sunny",
+                on_release=lambda x: app.set_theme("Light"),
+                pos_hint={"center_y": 0.5},
+                size_hint=(None, None),
+            ),
+            MDActionTopAppBarButton(
+                id="dark",
+                icon="moon-waxing-crescent",
+                on_release=lambda x: app.set_theme("Dark"),
+                size_hint=(None, None),
+                pos_hint={"center_y": 0.5},
+            ),
+            size_hint_x=0.5,
+            pos_hint={"right_x": 1},
+            spacing="5dp",
+        )
+        self.add_widget(trailing_buttons)
+
+
 class MainScreen(MDScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.md_bg_color = self.theme_cls.secondaryContainerColor
         self.app = MDApp.get_running_app()
-        self.app_top_bar = MDTopAppBar(
-            MDTopAppBarTitle(text="PlaylistCreator", pos_hint={"center_x": 0.5}, halign="center"),
-            MDTopAppBarTrailingButtonContainer(
-                MDActionTopAppBarButton(
-                    id="light",
-                    icon="weather-sunny",
-                    on_release=lambda x: self.app.set_theme("Light"),
-                ),
-                MDActionTopAppBarButton(
-                    id="dark",
-                    icon="moon-waxing-crescent",
-                    on_release=lambda x: self.app.set_theme("Dark"),
-                ),
-                pos_hint={"center_x": 0.8, "center_y": 0.5},
-                size_hint=(None, None),
-            ),
-            type="small",
-            size_hint_x=1.0,
-            pos_hint={"center_x": 0.5, "center_y": 0.95},
-            spacing="16dp",
-            padding="16dp",
-            md_bg_color=self.theme_cls.onSecondaryContainerColor,
-        )
+        self.app_top_bar = PlaylistCreatorTopBar()
         self.add_widget(self.app_top_bar)
 
         self.grid_layout = MDGridLayout(

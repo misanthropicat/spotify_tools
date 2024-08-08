@@ -9,7 +9,7 @@ source.include_patterns = data/*
 source.exclude_patterns = migrator.py
 version.regex = ([0-9]+.[0-9]+.[0-9]+)
 version.filename = %(source.dir)s/VERSION
-requirements = python3==3.11.9, kivy==2.3.0, spotipy==2.24.0, redis==5.0.7, https://github.com/kivymd/KivyMD/archive/master.zip, materialyoucolor==2.0.9, asynckivy==0.6.3, asyncgui==0.6.3, python-dotenv==1.0.1, pyjnius==1.6.1
+requirements = python3==3.11.9, kivy==2.3.0, spotipy==2.24.0, redis==5.0.7, https://github.com/kivymd/KivyMD/archive/master.zip, materialyoucolor==2.0.9, asynckivy==0.6.3, asyncgui==0.6.3, python-dotenv==1.0.1, pyjnius==1.6.1, requests==2.32.3
 presplash.filename = %(source.dir)s/data/splash_win.gif
 icon.filename = %(source.dir)s/data/app_icon.png
 orientation = portrait
