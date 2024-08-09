@@ -1,0 +1,9 @@
+venv*/
+.cache*
+*.env
+.vscode/
+__pycache__
+.buildozer/
+logs/
+build/
+dist/
