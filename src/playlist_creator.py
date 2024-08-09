@@ -2,6 +2,7 @@ import argparse
 import os
 import random
 from datetime import date
+from urllib.parse import urlparse
 
 import spotipy
 
@@ -10,11 +11,15 @@ scopes = "playlist-modify-public playlist-modify-private user-top-read user-read
 
 class PlaylistCreator:
     def __init__(self, username=None):
+        url_parts = urlparse(os.environ["SPOTIPY_REDIRECT_URI"])
+        server = spotipy.oauth2.start_local_http_server(url_parts.port)
+        server.server_activate()
         self.sp = spotipy.Spotify(
             auth_manager=spotipy.SpotifyPKCE(
                 client_id=os.environ["SPOTIPY_CLIENT_ID"],
                 redirect_uri=os.environ["SPOTIPY_REDIRECT_URI"],
                 scope=scopes,
+                requests_timeout=60,
             )
         )
         if username:
@@ -24,6 +29,7 @@ class PlaylistCreator:
                     redirect_uri=os.environ["SPOTIPY_REDIRECT_URI"],
                     scope=scopes,
                     username=username,
+                    requests_timeout=60,
                 )
             )
 
